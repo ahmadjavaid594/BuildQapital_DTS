@@ -1,0 +1,59 @@
+body {
+	background-color: #f8f9fa;
+	font-family: 'Arial', sans-serif;
+}
+.slip-container {
+	border: 2px solid #333;
+	padding: 20px;
+	margin: 20px auto;
+	max-width: 900px;
+	background-color: #fff;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+.header-text {
+	font-size: 1.4rem;
+	font-weight: bold;
+	text-align: center;
+	color: #333;
+}
+.sub-header {
+	font-size: 1rem;
+	font-weight: bold;
+	text-align: center;
+	color: #666;
+}
+.logo {
+	max-width: 80px;
+	height: 150px;
+	float: left;
+}
+.img-thumbnail {
+	border: 2px solid #333;
+	float: right;
+}
+.table-bordered th, .table-bordered td {
+	border: 1px solid #333;
+	vertical-align: middle;
+}
+ .qr-code img {
+	max-width: 200px;
+	height: auto;
+	float: right;
+	margin: 0 auto;
+}
+.instructions, .urdu-text {
+	font-size: 1.05rem;
+	line-height: 1.5;
+	margin-top: 20px;
+}
+.urdu-text {
+	font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+	direction: rtl;
+	text-align: right;
+}
+.footer-note {
+	font-size: 0.85rem;
+	text-align: center;
+	margin-top: 15px;
+	color: #555;
+}
