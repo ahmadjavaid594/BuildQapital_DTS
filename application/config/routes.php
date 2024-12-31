@@ -61,11 +61,10 @@ $route['translate_uri_dashes'] = FALSE;
 $route['home'] = 'Website';          
 $route['about'] = 'Website/about';          
 $route['services'] = 'Website/services';
-$route['jobs'] = 'Website/jobs';  
-$route['ipn'] = 'Payment/response';  
+$route['jobs'] = 'Website/jobs';    
 $route['jobs/(:num)'] = 'Website/viewJob/$1';    
 $route['contact'] = 'Website/contact';    
 $route['login'] = 'authentication';    
 $route['register'] = 'Website/register';
-$route['saveUser'] = 'Website/saveUser';
+$route['saveUser'] = 'Website/saveUser'; 
 

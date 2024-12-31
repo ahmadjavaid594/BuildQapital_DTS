@@ -286,7 +286,7 @@ class App_lib
         }
         return $arrayData;
     }
-    public function getSelectListName($table, $all = '', $sortField = 'name', $sortOrder = 'ASC')
+public function getSelectListName($table, $all = '', $sortField = 'name', $sortOrder = 'ASC')
     {
         $arrayData = array("" => translate('select'));
         if ($all == 'all') {

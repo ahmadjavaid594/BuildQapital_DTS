@@ -2,7 +2,7 @@
     <div class="tabs-custom">
 	<ul class="nav nav-tabs">
 			<li>
-				<a href="<?=base_url('document')?>"><i class="fas fa-list-ul"></i> My Documents</a>
+				<a href="<?=base_url('education')?>"><i class="fas fa-list-ul"></i> My Documents</a>
 			</li>
 			<li class="active">
 				<a href="#edit" data-toggle="tab"><i class="far fa-edit"></i> Edit Document</a>
@@ -13,16 +13,13 @@
                 <?php echo form_open_multipart($this->uri->uri_string(), array('class' => 'form-horizontal form-bordered validate')); ?>
                     <input type="hidden" name="document_id" value="<?= $data->id ?>" />
                     
-                    <div class="form-group">
-					<label class="col-md-3 control-label">Document Type<span class="required">*</span></label>
-					<div class="col-md-6">
-						<?php
-							$docTypes = $this->app_lib->getSelectList('doc_type');
-							echo form_dropdown("name", $docTypes, set_value('id', $data->name), "class='form-control' required id='organization_id' data-width='100%' data-plugin-selectTwo data-minimum-results-for-search='Infinity'");
-						?>
-						<span class="error"></span>
-					</div>
-				</div>
+                    <div class="form-group mt-md">
+                        <label class="col-md-3 control-label">Document Name <span class="required">*</span></label>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" name="name" value="<?= set_value('name', $data->name) ?>" />
+                            <span class="error"><?= form_error('name') ?></span>
+                        </div>
+                    </div>
 
                     
                     <div class="form-group">

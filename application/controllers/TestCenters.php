@@ -10,14 +10,14 @@ class TestCenters extends Admin_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('test_centers_model');
+        $this->load->model('Test_Centers_model');
     }
 
     /* Test centers list and form submission */
     public function index()
     {
-        if (is_superadmin_loggedin()) {
-            if ($this->input->post('submit') == 'save') {
+        if (!is_applicant_loggedin()) {
+            if ($this->input->post('submit') == 'save' && is_superadmin_loggedin()) {
                 // Validation rules
                 $this->form_validation->set_rules('name', translate('name'), 'required|callback_unique_name');
                 $this->form_validation->set_rules('address', translate('address'), 'required');
@@ -30,7 +30,7 @@ class TestCenters extends Admin_Controller
                 if ($this->form_validation->run() == true) {
                     // Save data
                     $post = $this->input->post();
-                    $response = $this->test_centers_model->save($post);
+                    $response = $this->Test_Centers_model->save($post);
                     if ($response) {
                         set_alert('success', translate('information_has_been_saved_successfully'));
                     }
@@ -67,7 +67,7 @@ class TestCenters extends Admin_Controller
                 if ($this->form_validation->run() == true) {
                     // Save data
                     $post = $this->input->post();
-                    $response = $this->test_centers_model->save($post, $id);
+                    $response = $this->Test_Centers_model->save($post, $id);
                     if ($response) {
                         set_alert('success', translate('information_has_been_updated_successfully'));
                     }
@@ -76,7 +76,7 @@ class TestCenters extends Admin_Controller
             }
 
             // Get test center data for editing
-            $this->data['data'] = $this->test_centers_model->getSingle('test_centers', $id, true);
+            $this->data['data'] = $this->Test_Centers_model->getSingle('test_centers', $id, true);
 
             // Load view
             $this->data['title'] = translate('Test Centers');

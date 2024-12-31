@@ -93,7 +93,7 @@
 <body>
     <div class="container my-5">
         <!-- Filters Section -->
-        <div class="row">
+        <!--<div class="row">
             <div class="col-md-11">
             <div class="filters-container">
             <h5>Filters</h5>
@@ -198,7 +198,7 @@
             </form>
         </div>
             </div>
-        </div>
+        </div>!-->
         
 
         <!-- Job Listings -->
@@ -222,13 +222,13 @@
                                       <p><strong class="alert-success">Application Status: <?= htmlspecialchars($job['job_status']) ?></p></strong>
                                       <p><strong class="alert-success">Applied On: <?= date("F j, Y", strtotime($job['application_date'])) ?></p></strong>
                                       <?php if($job['status_id']=="9"){ ?> 
-                                            <p class="alert-danger"><strong>You are required to submit the application fee (Rs. <?= htmlspecialchars($job['challan_amount']) ?>) through bank transfer to Faysal Bank Account Title: Domestic testing services Pvt Ltd, IBAN: PK61FAYS3459301000003492. Once done you need to upload paid fee pic in Paid Challans Menu (<strong>Against Application ID:</strong> <?= htmlspecialchars($job['unique_id']) ?>) to confirm you application submission </strong></p>
+                                            <p class="alert-danger"><strong>In order to confirm you job application submission, You are required to submit the application fee (Rs. <?= htmlspecialchars($job['challan_amount']) ?>) by going to  <a href="<?= base_url('job/challans') ?>" >Challans Menu</a></p>
                                        <?php } ?>
                                         <?php if($job['status_id']=="16"){ ?> 
                                             <p class="alert-success"><strong>Challan updated verification is in process you will be notified soon</strong></p>
                                        <?php } ?>
                                <?php } ?> 
-                                <div class="d-flex justify-content-end mt-6">
+                               <div class="d-flex justify-content-end mt-6">
                                     <?php if($job['status']=="Active" && $job['job_end_date'] >= date("Y-m-d"))  { ?>
                                         <?php echo form_open($this->uri->uri_string()); ?>
 					

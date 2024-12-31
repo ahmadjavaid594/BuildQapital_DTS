@@ -72,10 +72,11 @@
             <div class="col-md-6 mb-6">
                 <div class="card service-card p-3 text-left h-100" style="padding-left:10px;">
                     
-                    <h2 style="padding-top:50px;">Professional Testing </h2>
+                    <h2 style="padding-top:5px;">Professional Testing </h2>
                     <p class="card-text">DTS is a leading autonomous body providing national companies with comprehensive testing services to ensure they hire the right candidates for their organizations.</p>
                     <h3>Address</h2>
-                    <p class="card-text">Al Sahib Arcade Rawalpindi</p>
+                    <p class="card-text">Office 207 Al-Sahib Arcade
+<br>Old Airport Road Rawalpindi.</p>
                     <h3>Timings</h3>
                     <p class="card-text">Mon-Fri: 9am-5pm</p>
                   

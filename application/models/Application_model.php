@@ -66,7 +66,7 @@ class Application_model extends CI_Model
         }
     }
 
-    public function getUserNameByRoleID($roleID, $userID = '')
+ public function getUserNameByRoleID($roleID, $userID = '')
     {
         if ($roleID == 10) {
             $sql = "SELECT name,email,photo,1 as branch_id FROM applicants WHERE id = " . $this->db->escape($userID);

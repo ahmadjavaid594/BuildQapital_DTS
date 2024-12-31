@@ -34,12 +34,10 @@ class Authentication_model extends MY_Model
             return false;
         }
 
-      
     }
 
 
-    // password forgotten
-    public function lose_password($username)
+   public function lose_password($username)
     {
        
         if (!empty($username)) {

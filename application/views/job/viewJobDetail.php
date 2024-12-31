@@ -147,7 +147,7 @@
                                         <?php if($job['status_id']=="16"){ ?> 
                                             <p class="alert-success"><strong>Challan updated verification is in process you will be notified soon</strong></p>
                                        <?php } ?>
-               <?php if(!isset($job['job_status'])){ ?>    
+                <?php if($job['status']=="Active" && $job['job_end_date'] >= date("Y-m-d")){ ?>     
                 
                                             <button type="submit" class="btn btn-success  download-btn mr-3" name="submit" value="Apply">
                                                 Apply Now

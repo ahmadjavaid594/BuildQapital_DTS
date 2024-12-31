@@ -22,8 +22,8 @@ class DocType extends Admin_Controller
     /* branch all data are prepared and stored in the database here */
     public function index()
     {
-        if (is_superadmin_loggedin()) {
-            if ($this->input->post('submit') == 'save') {
+        if (!is_applicant_loggedin()) {
+            if ($this->input->post('submit') == 'save' && is_superadmin_loggedin()) {
                
                 $this->form_validation->set_rules('name', translate('name'), 'required|callback_unique_name');
                 $this->form_validation->set_rules('description', translate('description'), 'required');

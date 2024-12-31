@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Search</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -123,11 +122,11 @@
 
     <div class="row">
         <!-- Sidebar for Filters -->
-        <div class="col-md-3">
+        <!--<div class="col-md-3">
             <div class="filters-container">
                 <h5>Filters</h5>
                 <form action="<?= base_url('/jobs') ?>" method="get">
-                    <!-- Organization Filter -->
+                
                     <div class="form-group">
                         <label for="organization">Organization</label>
                         <select class="form-control" name="organization" id="organization">
@@ -140,7 +139,7 @@
                         </select>
                     </div>
 
-                    <!-- Quota Filter -->
+                    
                     <div class="form-group">
                         <label for="qouta">Quota</label>
                         <select class="form-control" name="qouta" id="qouta">
@@ -153,7 +152,7 @@
                         </select>
                     </div>
 
-                    <!-- Designation Filter -->
+                   
                     <div class="form-group">
                         <label for="designation">Designation</label>
                         <select class="form-control" name="designation" id="designation">
@@ -166,7 +165,7 @@
                         </select>
                     </div>
 
-                    <!-- Job Type Filter -->
+                   
                     <div class="form-group">
                         <label for="job-type">Job Type</label>
                         <select class="form-control" name="job_type" id="job-type">
@@ -179,7 +178,7 @@
                         </select>
                     </div>
 
-                    <!-- Location Filter -->
+                   
                     <div class="form-group">
                         <label for="location">Location</label>
                         <select class="form-control" name="location" id="location">
@@ -192,7 +191,7 @@
                         </select>
                     </div>
 
-                    <!-- Qualification Filter -->
+                  
                     <div class="form-group">
                         <label for="qualification">Qualification</label>
                         <select class="form-control" name="qualification" id="qualification">
@@ -205,7 +204,7 @@
                         </select>
                     </div>
 
-                    <!-- Submit and Reset Buttons -->
+                   
                     <div class="form-group mt-3">
                         <button type="submit" class="btn btn-primary btn-block">Apply Filters</button>
                     </div>
@@ -215,9 +214,9 @@
                 </form>
             </div>
         </div>
-
+!-->
         <!-- Job Listings -->
-        <div class="col-md-9">
+        <div class="col-md-12">
             <div class="row">
                 <?php if (isset($jobs) && is_array($jobs) && count($jobs) > 0): ?>
                     <?php foreach ($jobs as $job): ?>
@@ -241,8 +240,9 @@
     <?php if (!empty($job['job_file_path'])): ?>
         <a href="<?= base_url($job['job_file_path']) ?>" class="btn btn-warning btn-sm download-btn mr-2" target="_blank" style="font-size: 16px; padding: 10px 20px;margin:2px; border-radius: 6px; border-width: 2px;">Download Advertisement</a>
     <?php endif; ?>
-
+<?php if($job['status']=="Active" && $job['job_end_date'] >= date("Y-m-d"))  { ?>
     <a href="<?= base_url('register') ?>" class="btn btn-success btn-sm apply-btn" style="font-size: 16px; padding: 10px 20px; border-radius: 6px;">Apply Now</a>
+<?php } ?>    
     <!--<a href="https://forms.gle/wCM474brRzdUjiEz5" class="btn btn-success btn-sm apply-btn" style="font-size: 16px; padding: 10px 20px;margin:2px; border-radius: 6px;">Apply Now</a>!-->
 
 </div>

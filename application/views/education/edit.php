@@ -25,7 +25,7 @@
                         <label class="col-md-3 control-label">Degree <span class="required">*</span></label>
                         <div class="col-md-6 mb-md">
                             <?php
-                                $qualifications = $this->app_lib->getSelectList('qualification');
+                                $qualifications = $this->app_lib->getSelectListName('qualification');
                                 echo form_dropdown("degree", $qualifications, set_value('degree', $data->degree), "class='form-control' required='' id='qualification_id' data-width='100%' data-plugin-selectTwo data-minimum-results-for-search='Infinity'");
                             ?>
                             <span class="error"></span>

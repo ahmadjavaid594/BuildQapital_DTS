@@ -48,7 +48,7 @@
                                                 <i class="far fa-user"></i>
                                             </span>
                                         </span>
-                                        <input type="text" class="form-control" name="email" value="<?php echo set_value('email');?>" placeholder="<?php echo translate('email');?>" />
+                                        <input type="text" class="form-control" name="email" value="<?php echo set_value('email');?>" placeholder="Enter Your Email or CNIC" />
                                     </div>
                                     <span class="error"><?php echo form_error('email'); ?></span>
                                 </div>

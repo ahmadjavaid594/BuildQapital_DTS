@@ -18,60 +18,764 @@ class Job extends Admin_Controller
         $this->load->model('experience_model');
         $this->load->model('certification_model');
     }
-    
-    /* branch all data are prepared and stored in the database here */
-    public function response()
+    public function checkPaymentStatus($transactionNo)
     {
-        $decodedResponse = $_POST;
-      //  print_r($decodedResponse);
-        if ($decodedResponse && $decodedResponse['pp_ResponseCode'] === "000") {
-            //print_r($decodedResponse);      
-            $txnDateTime = $decodedResponse['pp_TxnDateTime'];
+        $global_config = $this->db->get_where('global_settings', ['id' => 1])->row_array();
+        $merchantID = $global_config['jc_merchant_id'];
+        $password = $global_config['jc_merchant_pwd'];
+        $txnRefNo = $transactionNo; // Replace with your transaction reference number
+        $integritySalt = $global_config['jc_merchant_is']; // Replace with your secret integrity key
+        $job_application = $this->job_model->validateTransaction1($transactionNo);
+        // Generate the Secure Hash using HMAC-SHA256
+        $dataArray = [
+            "pp_MerchantID" => $merchantID,
+            "pp_Password" => $password,
+            "pp_TxnRefNo" => $txnRefNo,
+        ];
+        ksort($dataArray); // Sort fields in ascending alphabetical order
+        $dataString = implode('&', $dataArray);
+        $hashString = $integritySalt . '&' . $dataString;
+        $secureHash = hash_hmac('sha256', $hashString, $integritySalt);
 
-            $date = substr($txnDateTime, 0, 4) . '-' . substr($txnDateTime, 4, 2) . '-' . substr($txnDateTime, 6, 2);
-            $time = substr($txnDateTime, 8, 2) . ':' . substr($txnDateTime, 10, 2) . ':' . substr($txnDateTime, 12, 2);
-            $formattedDateTime = $date . ' ' . $time;
+        // API request payload
+        $requestData = [
+            "pp_MerchantID" => $merchantID,
+            "pp_Password" => $password,
+            "pp_TxnRefNo" => $txnRefNo,
+            "pp_SecureHash" => $secureHash,
+        ];
+
+        // API endpoint (use sandbox or production)
+        $apiUrl = $global_config['jc_status_url']; // For sandbox testing
+        // $apiUrl = "https://payments.jazzcash.com.pk/ApplicationAPI/API/PaymentInquiry/Inquire"; // For production
+
+        // Initialize cURL
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $apiUrl);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestData));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json",
+        ]);
+
+        // Execute API call
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+                                     
+            set_alert('error', "Curl Error: " . curl_error($ch));
             
-            $data['payment_date'] = $formattedDateTime;
-            $data['amount'] = $decodedResponse['pp_Amount']/100;
-            $data['transaction_id'] = $decodedResponse['pp_TxnRefNo'];
-            $data['bank_name'] = 'Card Payment';
-            $data['job_application_id'] = $decodedResponse['pp_BillReference'];
-            $data['company_name'] = $decodedResponse['ppmpf_3'];
-            $data['job_position'] = $decodedResponse['ppmpf_4'];
-            $data['payment_mode'] = "Card Payment";
-            $data['status_id'] = 16;
-            $data['payment_response_code'] = $decodedResponse['pp_ResponseCode'];
-            $data['payment_response'] = json_encode($_POST);
-            $response = $this->applicants_model->updatePayment($data);
-           
-            if ($response) {
+        } else {
+            $decodedResponse = json_decode($response, true);
+          
+            if ($decodedResponse && $decodedResponse['pp_ResponseCode'] === "000") {
+      
+                if ($decodedResponse['pp_PaymentResponseCode'] === '121') {
+                
+                
+                $txnDateTime = $decodedResponse['pp_TxnDateTime'];
+
+                $date = substr($txnDateTime, 0, 4) . '-' . substr($txnDateTime, 4, 2) . '-' . substr($txnDateTime, 6, 2);
+                $time = substr($txnDateTime, 8, 2) . ':' . substr($txnDateTime, 10, 2) . ':' . substr($txnDateTime, 12, 2);
+                $formattedDateTime = $date . ' ' . $time;
+                
+                $data = [
+                    'ipn_payment_date' => $formattedDateTime,
+                    'ipn_pp_TxnType' => $job_application['payment_mode'],
+                    'ipn_pp_responseCode' => $decodedResponse['pp_ResponseCode'],
+                    'ipn_pp_responseMessage' => $decodedResponse['pp_PaymentResponseMessage'],
+                    'ipn_pp_response' =>  json_encode($decodedResponse),
+                    'pp_TxnRefNo' => $transactionNo,
+                    'status_id' => 16
+                ];
+                $response = $this->job_model->updatePaymentIPN($data); 
+               
+                if ($response) {
+                    
+                    set_alert('success', $decodedResponse['pp_ResponseMessage']);
+                    redirect(base_url('job/viewApplicationDetail/'.$job_application['unique_id']));
+                   
+                }
+                else{
+                    set_alert('error', $decodedResponse['pp_ResponseMessage']);
+                }
+
+               }
+               else{
+                $data = [
+                    'ipn_payment_date' => $formattedDateTime,
+                    'ipn_pp_TxnType' => $job_application['payment_mode'],
+                    'ipn_pp_responseCode' => $decodedResponse['pp_ResponseCode'],
+                    'ipn_pp_responseMessage' => $decodedResponse['pp_PaymentResponseMessage'],
+                    'ipn_pp_response' =>  json_encode($decodedResponse),
+                    'pp_TxnRefNo' => $transactionNo,
+                    'status_id' => 17
+                ];
+                $response = $this->job_model->updatePaymentIPN($data); 
+                set_alert('error', $decodedResponse['pp_ResponseMessage']);
+               }
               
+            } else {
+        
+                set_alert('error', $decodedResponse['pp_ResponseMessage']);
+            }
+        }
+       
+       
+    }
+    public function checkPaymentStatusUser($transactionNo)
+    {
+      
+        $global_config = $this->db->get_where('global_settings', ['id' => 1])->row_array();
+        $merchantID = $global_config['jc_merchant_id'];
+        $password = $global_config['jc_merchant_pwd'];
+        $txnRefNo = $transactionNo; // Replace with your transaction reference number
+        $integritySalt = $global_config['jc_merchant_is']; // Replace with your secret integrity key
+        $job_application = $this->job_model->validateTransaction1($transactionNo);
+        // Generate the Secure Hash using HMAC-SHA256
+        $dataArray = [
+            "pp_MerchantID" => $merchantID,
+            "pp_Password" => $password,
+            "pp_TxnRefNo" => $txnRefNo,
+        ];
+        ksort($dataArray); // Sort fields in ascending alphabetical order
+        $dataString = implode('&', $dataArray);
+        $hashString = $integritySalt . '&' . $dataString;
+        $secureHash = hash_hmac('sha256', $hashString, $integritySalt);
+
+        // API request payload
+        $requestData = [
+            "pp_MerchantID" => $merchantID,
+            "pp_Password" => $password,
+            "pp_TxnRefNo" => $txnRefNo,
+            "pp_SecureHash" => $secureHash,
+        ];
+
+        // API endpoint (use sandbox or production)
+        $apiUrl = $global_config['jc_status_url']; // For sandbox testing
+        // $apiUrl = "https://payments.jazzcash.com.pk/ApplicationAPI/API/PaymentInquiry/Inquire"; // For production
+
+        // Initialize cURL
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $apiUrl);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestData));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json",
+        ]);
+
+        // Execute API call
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+                            
+            set_alert('error', "Curl Error: " . curl_error($ch));
+            
+        } else {
+            
+            $decodedResponse = json_decode($response, true);
+          
+            if ($decodedResponse && $decodedResponse['pp_ResponseCode'] === "000") {
+             
+                if ($decodedResponse['pp_PaymentResponseCode'] === '121') {
+                
+                
+                $txnDateTime = $decodedResponse['pp_TxnDateTime'];
+
+                $date = substr($txnDateTime, 0, 4) . '-' . substr($txnDateTime, 4, 2) . '-' . substr($txnDateTime, 6, 2);
+                $time = substr($txnDateTime, 8, 2) . ':' . substr($txnDateTime, 10, 2) . ':' . substr($txnDateTime, 12, 2);
+                $formattedDateTime = $date . ' ' . $time;
+                
+                $data = [
+                    'ipn_payment_date' => $formattedDateTime,
+                    'ipn_pp_TxnType' => $job_application['payment_mode'],
+                    'ipn_pp_responseCode' => $decodedResponse['pp_ResponseCode'],
+                    'ipn_pp_responseMessage' => $decodedResponse['pp_PaymentResponseMessage'],
+                    'ipn_pp_response' =>  json_encode($decodedResponse),
+                    'pp_TxnRefNo' => $transactionNo,
+                    'status_id' => 16
+                ];
+                $response = $this->job_model->updatePaymentIPN($data); 
+               
+                if ($response) {
+                    
+                    set_alert('success', $decodedResponse['pp_ResponseMessage']);
+                    redirect(base_url('/job/challans'));
+                   
+                }
+                else{
+                    set_alert('error', $decodedResponse['pp_ResponseMessage']);
+                    redirect(base_url('/job/challans'));
+                }
+
+               }
+               else{
+                /*$data = [
+                    'ipn_payment_date' => $formattedDateTime,
+                    'ipn_pp_TxnType' => $job_application['payment_mode'],
+                    'ipn_pp_responseCode' => $decodedResponse['pp_ResponseCode'],
+                    'ipn_pp_responseMessage' => $decodedResponse['pp_PaymentResponseMessage'],
+                    'ipn_pp_response' =>  json_encode($decodedResponse),
+                    'pp_TxnRefNo' => $transactionNo,
+                    'status_id' => 17
+                ];
+                $response = $this->job_model->updatePaymentIPN($data);*/
                 set_alert('success', $decodedResponse['pp_ResponseMessage']);
-                redirect(base_url('job/challans'));
+                redirect(base_url('/job/challans'));
+               }
+              
+            } else {
+        
+                set_alert('error', $decodedResponse['pp_ResponseMessage']);
+                redirect(base_url('/job/challans'));
+            }
+        }
+       
+       
+    }
+     public function viewReceipt($applicationId)
+    {
+      
+        $global_config = $this->db->get_where('global_settings',array('id'=>1))->row_array();
+      
+       
+            
+            $post = $this->input->post();
+                
+            $jobApplication = $this->job_model->getReceiptDetail($applicationId);
+           
+            if (!$jobApplication) {
+                show_404(); // Show 404 if job is not found
             }
             else{
-                set_alert('error', $decodedResponse['pp_ResponseMessage']);
-                redirect(base_url('job/challans'));
+               
+                    $userID = get_loggedin_user_id();
+                  
+                       if($this->applicants_model->isAlreadyApplied($userID,$jobApplication['id']))
+                            {
+                                
+                                $challanDetails = json_decode($jobApplication['payment_response'],true);
+                                
+                                $this->data['applicant'] = $this->applicants_model->getSingleApplicant($userID);
+                                $this->data['jobApplication'] = $jobApplication;
+                                $this->data['challanDetails'] = $challanDetails;
+                                $this->data['title'] = 'View Receipt';
+                                $this->data['sub_page'] = 'job/viewReceipt';
+                                $this->data['main_menu'] = 'jobs';
+                                $this->load->view('layout/index', $this->data);
+                               
+                            }
+                            else{
+                          
+                                set_alert('error', 'You need to apply first');
+                              
+                            }
+                  
+              
             }
+        
+        
+        
+     
 
-                
-          
+    }
+        public function payViaOTC($applicationId)
+{
+    $global_config = $this->db->get_where('global_settings', ['id' => 1])->row_array();
+
+    if ($this->input->post('submit') === 'update') {
+        $post = $this->input->post();
+        $jobApplication = $this->job_model->getChallanDetail($post['job_application_id']);
+
+        if (!$jobApplication) {
+            show_404(); // Show 404 if job is not found
         } else {
+            if ($jobApplication['status'] === 'Active') {
+                $userID = get_loggedin_user_id();
+                if ($jobApplication['job_end_date'] > date("Y-m-d")) {
+                    if ($this->applicants_model->isAlreadyApplied($userID, $post['job_id'])) {
 
-            $data['payment_mode'] = "Card Payment";
-            $data['payment_response_code'] = $decodedResponse['pp_ResponseCode'];
-            $data['payment_response'] = $decodedResponse;
-            $response = $this->applicants_model->updatePayment($data);
-            set_alert('error', $decodedResponse['pp_ResponseMessage']);
-           redirect(base_url('job/challans'));
+                        $this->form_validation->set_rules('pp_MobileNumber', translate('pp_MobileNumber'), 'required');
+                        $this->form_validation->set_rules('pp_BillReference', translate('pp_BillReference'), 'required');
+                        $this->form_validation->set_rules('pp_Description', translate('pp_Description'), 'required');
+
+                        if ($this->form_validation->run() === true) {
+                            $parameters = [
+                                "pp_Version" => "1.1",
+                                "pp_TxnType" => "OTC",
+                                "pp_Amount" => $post['pp_Amount'], // Amount in paisas
+                                "pp_BillReference" => $post['pp_BillReference'],
+                                "pp_Description" => $post['pp_Description'],
+                                "pp_Language" => "EN",
+                                "pp_ReturnURL" => $global_config['jc_return_url'],
+                                "pp_MerchantID" => $global_config['jc_merchant_id'],
+                                "pp_MobileNumber" => $post['pp_MobileNumber'],
+                                "pp_Password" => $global_config['jc_merchant_pwd'],
+                                "pp_TxnCurrency" => "PKR",
+                                "pp_TxnDateTime" => date("YmdHis"),
+                                "pp_TxnExpiryDateTime" => date("YmdHis", strtotime("+1 day")),
+                                "pp_TxnRefNo" => uniqid("T"),
+                                "ppmpf_1" => $post['pp_MobileNumber'],
+                                "ppmpf_2" => $post['applicant_id']
+                            ];
+
+                            $integritySalt = $global_config['jc_merchant_is'];
+                            $parameters["pp_SecureHash"] = $this->generateSecureHash($parameters, $integritySalt);
+
+                            $apiUrl = $global_config['jc_otc_url'];
+                            $ch = curl_init($apiUrl);
+                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($ch, CURLOPT_POST, true);
+                            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($parameters));
+                            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                                'Content-Type: application/json',
+                            ]);
+
+                            $response = curl_exec($ch);
+                            if (curl_errno($ch)) {
+                                set_alert('error', "Curl Error: " . curl_error($ch));
+                            } else {
+                                $decodedResponse = json_decode($response, true);
+
+                                if ($decodedResponse && $decodedResponse['pp_ResponseCode'] === "124") {
+                                    $txnDateTime = $decodedResponse['pp_TxnDateTime'];
+
+                                    $date = substr($txnDateTime, 0, 4) . '-' . substr($txnDateTime, 4, 2) . '-' . substr($txnDateTime, 6, 2);
+                                    $time = substr($txnDateTime, 8, 2) . ':' . substr($txnDateTime, 10, 2) . ':' . substr($txnDateTime, 12, 2);
+                                    $formattedDateTime = $date . ' ' . $time;
+
+                                    $data = [
+                                        'payment_date' => $formattedDateTime,
+                                        'amount' => $decodedResponse['pp_Amount'] / 100,
+                                        'transaction_id' => $decodedResponse['pp_TxnRefNo'],
+                                        'bank_name' => 'OTC',
+                                        'job_application_id' => $decodedResponse['pp_BillReference'],
+                                        'company_name' => $post['company_name'],
+                                        'job_position' => $post['job_position'],
+                                        'payment_mode' => "OTC",
+                                        'status_id' => 9,
+                                        'payment_response_code' => $decodedResponse['pp_ResponseCode'],
+                                        'payment_response' => json_encode($decodedResponse)
+                                    ];
+
+                                    $response = $this->applicants_model->updatePayment($data);
+
+                                    if ($response) {
+                                        set_alert('success', $decodedResponse['pp_ResponseMessage']." Kindly visit nearest JazzCash along with your transaction id for payment of challan fee");
+                                        
+                                        redirect(base_url('job/viewReceipt/'.$applicationId));
+                                    } else {
+                                        set_alert('error', $decodedResponse['pp_ResponseMessage']);
+                                        return;
+                                    }
+                                } else {
+                                    set_alert('error', $decodedResponse['pp_ResponseMessage'] ?? 'Error processing payment.');
+                                }
+                            }
+                        } else {
+                            set_alert('error', 'Required data is missing or invalid.');
+                        }
+                    } else {
+                        set_alert('error', 'You need to apply first.');
+                    }
+                } else {
+                    set_alert('error', 'Job is not active.');
+                }
+            } else {
+                set_alert('error', 'Job is not active.');
+            }
         }
     }
+
+    $jobApplication = $this->job_model->getChallanDetail($applicationId);
+
+    if (!$jobApplication) {
+        show_404(); // Show 404 if job is not found
+    }
+
+    $this->data['jobApplication'] = $jobApplication;
+    $this->data['title'] = 'Pay Via OTC';
+    $this->data['sub_page'] = 'job/payViaOTC';
+    $this->data['main_menu'] = 'jobs';
+
+    $this->load->view('layout/index', $this->data);
+}
+    public function paymentModeSelection($applicationId)
+    {
+      
+        $global_config = $this->db->get_where('global_settings', ['id' => 1])->row_array();
+    
+       
+            $post = $this->input->post();
+            $jobApplication = $this->job_model->getChallanDetail($applicationId);
+          
+            if (!$jobApplication) {
+              
+                show_404();
+            } else {
+               /// print_r($jobApplication);
+               
+                if ($jobApplication['status'] == 'Active' && $jobApplication['job_end_date'] >= date("Y-m-d")) {
+                    //print_r($jobApplication);
+                    
+                    $userID = get_loggedin_user_id();
+                    if ($this->applicants_model->isAlreadyApplied($userID, $jobApplication['id'])) {
+                        //print_r($jobApplication);
+                        
+                            $parameters = [
+                                "pp_Version" => "1.1",
+                                "pp_TxnType" => "MPAY",
+                                "pp_Language" => "EN",
+                                "pp_MerchantID" => $global_config['jc_merchant_id'],
+                                "pp_Password" => $global_config['jc_merchant_pwd'],
+                                "pp_Amount" => $jobApplication['challan_amount'] * 100,
+                                "pp_BillReference" => $jobApplication['unique_id'],
+                                "pp_Description" => "Challan Payment for " .$jobApplication['unique_id'],
+                                "pp_TxnCurrency" => "PKR",
+                                "pp_TxnDateTime" => date("YmdHis"),
+                                "pp_TxnExpiryDateTime" => date("YmdHis", strtotime("+1 day")),
+                                "pp_TxnRefNo" => uniqid("T"),
+                                "pp_ReturnURL" => $global_config['jc_return_url'], // Adjust this to your return URL
+                                "ppmpf_1" => $jobApplication['id'],
+                                "ppmpf_2" => $userID,
+                                "ppmpf_3" => $jobApplication['organization'],
+                                "ppmpf_4" => $jobApplication['designation']
+                            ];
+    
+                            $payment_session = [
+                                'transaction_id' => $jobApplication['unique_id'],
+                                'user_id' => $userID ,
+                                'session_data' => serialize($this->session->userdata()),
+                            ];
+                            $this->db->insert('payment_sessions', $payment_session);
+                            // Generate secure hash
+                            $integritySalt = $global_config['jc_merchant_is'];
+                            $parameters["pp_SecureHash"] = $this->generateSecureHash($parameters, $integritySalt);
+                            //echo json_encode($parameters);
+                            //print_r($global_config['jc_card_url']);
+                            //die;
+                            
+                        
+                    } else {
+                        set_alert('error', 'You need to apply first');
+                      ;
+                    }
+                } else {
+                    set_alert('error', 'Job Is Not Active');
+                   
+                }
+            }
+       
+      
+      
+        $this->data['jobApplication'] = $jobApplication;
+        $this->data['parameters'] = $parameters;
+        $this->data['url'] = $global_config['jc_card_url'];
+        $this->data['title'] = 'Payment Mode Selection';
+        $this->data['sub_page'] = 'job/paymentModeSelection';
+        $this->data['main_menu'] = 'jobs';
+      
+        $this->load->view('layout/index', $this->data);
+
+    }
+    function generateSecureHash($parameters, $integritySalt) {
+        ksort($parameters); // Sort by key in ascending order
+        $sortedString = $integritySalt; // Start with the integrity salt
+        foreach ($parameters as $key => $value) {
+            if ($value !== "") {
+                $sortedString .= '&' . $value; // Concatenate each value
+            }
+        }
+        return strtoupper(hash_hmac('sha256', $sortedString, $integritySalt));
+    }
+    public function payChallanViaCard($applicationId=0)
+    {
+        $global_config = $this->db->get_where('global_settings', ['id' => 1])->row_array();
+     
+        if (!$this->input->post()) {
+            $post = $this->input->post();
+            $jobApplication = $this->job_model->getChallanDetail($applicationId);
+    
+            if (!$jobApplication) {
+              
+                show_404();
+            } else {
+               /// print_r($jobApplication);
+               
+                if ($jobApplication['status'] == 'Active' && $jobApplication['job_end_date'] > date("Y-m-d")) {
+                    //print_r($jobApplication);
+                    
+                    $userID = get_loggedin_user_id();
+                    if ($this->applicants_model->isAlreadyApplied($userID, $jobApplication['id'])) {
+                        //print_r($jobApplication);
+                        
+                            $parameters = [
+                                "pp_Version" => "1.1",
+                                "pp_TxnType" => "MPAY",
+                                "pp_Language" => "EN",
+                                "pp_MerchantID" => $global_config['jc_merchant_id'],
+                                "pp_Password" => $global_config['jc_merchant_pwd'],
+                                "pp_Amount" => $jobApplication['challan_amount'] * 100,
+                                "pp_BillReference" => $jobApplication['unique_id'],
+                                "pp_Description" => "Challan Payment for " .$jobApplication['unique_id'],
+                                "pp_TxnCurrency" => "PKR",
+                                "pp_TxnDateTime" => date("YmdHis"),
+                                "pp_TxnExpiryDateTime" => date("YmdHis", strtotime("+1 day")),
+                                "pp_TxnRefNo" => uniqid("T"),
+                                "pp_ReturnURL" => $global_config['jc_return_url'], // Adjust this to your return URL
+                                "ppmpf_1" => $jobApplication['job_id'],
+                                "ppmpf_2" => $jobApplication['applicant_id'],
+                                "ppmpf_3" => $jobApplication['organization'],
+                                "ppmpf_4" => $jobApplication['designation']
+                            ];
+    
+                            // Generate secure hash
+                            $integritySalt = $global_config['jc_merchant_is'];
+                            $parameters["pp_SecureHash"] = $this->generateSecureHash($parameters, $integritySalt);
+                            print_r($parameters);
+                            print_r($global_config['jc_card_url']);
+                             die;
+                            
+                            // Directly output the form and submit it automatically
+                            echo '<html><body>';
+                            echo '<form id="autoSubmitForm" method="post" action="' . $global_config['jc_card_url'] . '">';
+                            foreach ($parameters as $key => $value) {
+                                echo '<input type="hidden" name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($value) . '">';
+                            }
+                            echo '</form>';
+                            
+                            // Add session keep-alive script
+                            echo '<script>
+                                setInterval(function() {
+                                    fetch("' . base_url('keep-alive') . '", { method: "GET" });
+                                }, 300000); // Keep session alive every 5 minutes
+                            
+                                document.getElementById("autoSubmitForm").submit();
+                            </script>';
+                            echo '</body></html>';
+                            exit();
+                        
+                    } else {
+                        set_alert('error', 'You need to apply first');
+                        redirect('job/apply/'.$applicationId);
+                    }
+                } else {
+                    set_alert('error', 'Job Is Not Active');
+                    redirect('job/apply/'.$applicationId);
+                }
+            }
+        } else {
+            redirect('job/apply/'.$applicationId); // Redirect if no submission
+        }
+    }
+/* public function payChallan($applicationId)
+{
+    $global_config = $this->db->get_where('global_settings', array('id' => 1))->row_array();
+
+    if ($this->input->post('submit') == 'update') {
+        $post = $this->input->post();
+        $jobApplication = $this->job_model->getChallanDetail($post['job_application_id']);
+
+        if (!$jobApplication) {
+            show_404(); // Show 404 if job is not found
+        } else {
+            if ($jobApplication['status'] == 'Active') {
+                $userID = get_loggedin_user_id();
+                if ($jobApplication['job_end_date'] > date("Y-m-d")) {
+                    if ($this->applicants_model->isAlreadyApplied($userID, $post['job_id'])) {
+                        $this->form_validation->set_rules('pp_MobileNumber', translate('pp_MobileNumber'), 'required');
+                        $this->form_validation->set_rules('pp_BillReference', translate('pp_BillReference'), 'required');
+                        $this->form_validation->set_rules('pp_CNIC', translate('pp_CNIC'), 'required');
+                        $this->form_validation->set_rules('pp_Description', translate('pp_Description'), 'required');
+
+                        if ($this->form_validation->run() == true) {
+                            // Prepare task data for asynchronous processing
+                            $taskData = [
+                                'pp_Amount' => $post['pp_Amount'],
+                                'pp_BillReference' => $post['pp_BillReference'],
+                                'pp_CNIC' => $post['pp_CNIC'],
+                                'pp_Description' => $post['pp_Description'],
+                                'pp_MobileNumber' => $post['pp_MobileNumber'],
+                                'job_id' => $post['job_id'],
+                                'applicant_id' => $post['applicant_id'],
+                                'merchant_id' => $global_config['jc_merchant_id'],   // Merchant ID
+                                'merchant_pwd' => $global_config['jc_merchant_pwd'],   // Merchant Password
+                                'merchant_is' => $global_config['jc_merchant_is'],     // Integrity Salt
+                                'merchant_secret' => $global_config['jc_merchant_is'],  // Secret
+                                'api_url' => $global_config['jc_testing_url'],          // API URL
+                                'status' => 'pending',
+                                'created_at' => date("Y-m-d H:i:s")
+                            ];
+
+                            // Save the task in the async_tasks table
+                            $this->db->insert('async_tasks', $taskData);
+
+                            // Notify the user
+                            set_alert('success', 'Your payment request has been submitted and will be processed shortly.');
+                            redirect(base_url('job/challans'));
+                        } else {
+                            set_alert('error', 'Required Data Is Missing');
+                        }
+                    } else {
+                        set_alert('error', 'You need to apply first');
+                    }
+                } else {
+                    set_alert('error', 'Job Is Not Active');
+                }
+            } else {
+                set_alert('error', 'Job Is Not Active');
+            }
+        }
+    }
+
+    $jobApplication = $this->job_model->getChallanDetail($applicationId);
+
+    if (!$jobApplication) {
+        show_404(); // Show 404 if job is not found
+    }
+
+    $this->data['jobApplication'] = $jobApplication;
+    $this->data['title'] = 'Pay Challan';
+    $this->data['sub_page'] = 'job/payChallan';
+    $this->data['main_menu'] = 'jobs';
+
+    $this->load->view('layout/index', $this->data);
+}
+*/
+
+   public function payChallan($applicationId)
+{
+    $global_config = $this->db->get_where('global_settings', array('id' => 1))->row_array();
+
+    if ($this->input->post('submit') == 'update') {
+        $this->data['is_processing'] = true;
+        $post = $this->input->post();
+
+        $jobApplication = $this->job_model->getChallanDetail($post['job_application_id']);
+
+        if (!$jobApplication) {
+            show_404(); // Show 404 if job is not found
+        } else {
+            if ($jobApplication['status'] == 'Active') {
+                $userID = get_loggedin_user_id();
+                if ($jobApplication['job_end_date'] > date("Y-m-d")) {
+                    if ($this->applicants_model->isAlreadyApplied($userID, $post['job_id'])) {
+                        $this->form_validation->set_rules('pp_MobileNumber', translate('pp_MobileNumber'), 'required');
+                        $this->form_validation->set_rules('pp_BillReference', translate('pp_BillReference'), 'required');
+                        $this->form_validation->set_rules('pp_CNIC', translate('pp_CNIC'), 'required');
+                        $this->form_validation->set_rules('pp_Description', translate('pp_Description'), 'required');
+
+                        if ($this->form_validation->run() == true) {
+                            $parameters = [
+                                "pp_Amount" => $post['pp_Amount'], // Amount in paisas
+                                "pp_BillReference" => $post['pp_BillReference'],
+                                "pp_CNIC" => $post['pp_CNIC'],
+                                "pp_Description" => $post['pp_Description'],
+                                "pp_Language" => "EN",
+                                "pp_MerchantID" => $global_config['jc_merchant_id'],
+                                "pp_MobileNumber" => $post['pp_MobileNumber'],
+                                "pp_Password" => $global_config['jc_merchant_pwd'],
+                                "pp_TxnCurrency" => "PKR",
+                                "pp_TxnDateTime" => date("YmdHis"),
+                                "pp_TxnExpiryDateTime" => date("YmdHis", strtotime("+1 day")),
+                                "pp_TxnRefNo" => uniqid("T"),
+                                "ppmpf_1" => $post['job_id'],
+                                "ppmpf_2" => $post['applicant_id']
+                            ];
+
+                            $integritySalt = $global_config['jc_merchant_is']; // Replace with actual integrity salt
+                            $parameters["pp_SecureHash"] = $this->generateSecureHash($parameters, $integritySalt);
+
+                            $apiUrl = $global_config['jc_testing_url'];
+                            $ch = curl_init($apiUrl);
+                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($ch, CURLOPT_POST, true);
+                            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($parameters));
+                            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                                'Content-Type: application/json',
+                            ]);
+
+                            $response = curl_exec($ch);
+                            $this->db->reconnect(); // Reconnect after long external API call
+
+                            if (curl_errno($ch)) {
+                                log_message('error', "Curl Error: " . curl_error($ch));
+                                set_alert('error', "Curl Error: " . curl_error($ch));
+                            } else {
+                                $decodedResponse = json_decode($response, true);
+
+                                if ($decodedResponse && $decodedResponse['pp_ResponseCode'] === "000") {
+                                    $txnDateTime = $decodedResponse['pp_TxnDateTime'];
+                                    $date = substr($txnDateTime, 0, 4) . '-' . substr($txnDateTime, 4, 2) . '-' . substr($txnDateTime, 6, 2);
+                                    $time = substr($txnDateTime, 8, 2) . ':' . substr($txnDateTime, 10, 2) . ':' . substr($txnDateTime, 12, 2);
+                                    $formattedDateTime = $date . ' ' . $time;
+
+                                    $data = [
+                                        'payment_date' => $formattedDateTime,
+                                        'amount' => $decodedResponse['pp_Amount'] / 100,
+                                        'transaction_id' => $decodedResponse['pp_TxnRefNo'],
+                                        'bank_name' => 'JazzCash Wallet',
+                                        'job_application_id' => $decodedResponse['pp_BillReference'],
+                                        'company_name' => $post['company_name'],
+                                        'job_position' => $post['job_position'],
+                                        'payment_mode' => "JazzCash Wallet",
+                                        'status_id' => 16,
+                                        'payment_response_code' => $decodedResponse['pp_ResponseCode'],
+                                        'payment_response' => json_encode($decodedResponse)
+                                    ];
+
+                                    $this->db->reconnect(); // Ensure reconnection before database update
+                                    $response = $this->applicants_model->updatePayment($data);
+
+                                    if ($response) {
+                                        set_alert('success', $decodedResponse['pp_ResponseMessage']);
+                                        redirect(base_url('job/challans'));
+                                    } else {
+                                        log_message('error', 'Payment update failed: ' . json_encode($data));
+                                        set_alert('error', $decodedResponse['pp_ResponseMessage']);
+                                    }
+                                } else {
+                                    set_alert('error', $decodedResponse['pp_ResponseMessage']);
+                                }
+                            }
+                        } else {
+                            set_alert('error', 'Required Data Is Missing');
+                        }
+                    } else {
+                        set_alert('error', 'You need to apply first');
+                    }
+                } else {
+                    set_alert('error', 'Job Is Not Active');
+                }
+            } else {
+                set_alert('error', 'Job Is Not Active');
+            }
+        }
+    }
+
+    $this->db->reconnect(); // Ensure reconnection before fetching data
+    $jobApplication = $this->job_model->getChallanDetail($applicationId);
+
+    if (!$jobApplication) {
+        show_404(); // Show 404 if job is not found
+    }
+
+    $this->data['jobApplication'] = $jobApplication;
+    $this->data['title'] = 'Pay Challan';
+    $this->data['sub_page'] = 'job/payChallan';
+    $this->data['main_menu'] = 'jobs';
+
+    $this->load->view('layout/index', $this->data);
+}
+
+    /* branch all data are prepared and stored in the database here */
     public function index()
     {
         
-        if (is_superadmin_loggedin()) {
-            if ($this->input->post('submit') == 'save') {
+        if (!is_applicant_loggedin()) {
+            if ($this->input->post('submit') == 'save' && is_superadmin_loggedin()) {
                
                 $this->job_validation();
                
@@ -111,7 +815,7 @@ class Job extends Admin_Controller
         }
     }
  
- 
+    
 
     public function viewDetail($job_id)
     {
@@ -132,7 +836,7 @@ class Job extends Admin_Controller
                 if($job['status']=='Active')
                 {
                  
-                    if($job['job_end_date'] > date("Y-m-d"))
+                    if($job['job_end_date'] >= date("Y-m-d"))
                     {
                         $userID = get_loggedin_user_id();
                        // if($this->applicants_model->getApplicantEducation($userID))
@@ -184,28 +888,19 @@ class Job extends Admin_Controller
         $this->data['sub_page'] = 'job/viewJobDetail';
         $this->load->view('layout/index', $this->data);
     }
-    public function test()
-    {
-        print_r($_REQUEST);
-    }
     public function challans()
     {
+        
+        $jobs = $this->job_model->getChallans();
        
         
-                $jobs = $this->job_model->getChallans();
+        $this->data['jobs'] = $jobs;
+        
+        $this->data['title'] = 'Challans';
+        $this->data['sub_page'] = 'job/viewChallans';
+        $this->data['main_menu'] = 'jobs';
        
-        
-                $this->data['jobs'] = $jobs;
-                
-                $this->data['title'] = 'Challans';
-                $this->data['sub_page'] = 'job/viewChallans';
-                $this->data['main_menu'] = 'jobs';
-               
-                $this->load->view('layout/index', $this->data);
-            
-        
-        
-       
+        $this->load->view('layout/index', $this->data);
 
     }
     public function rollNoSlips()
@@ -222,58 +917,70 @@ class Job extends Admin_Controller
     }
     public function viewApplicationDetail($applicationId)
     {
-        
-
-        if ($this->input->post('submit') == 'update') {
-            
-            $post = $this->input->post();
-                   
-                    $response = $this->applicants_model->updateJobApplication($post);
-                  
-                    if ($response) {
-                        set_alert('success', translate('information_has_been_saved_successfully'));
-                    }
-                    redirect(base_url('job/viewApplicationDetail/'.$applicationId));
-                            
+        if(is_superadmin_loggedin()){
+                if ($this->input->post('submit') == 'update') {
+                    
+                    $post = $this->input->post();
+                           
+                            $response = $this->applicants_model->updateJobApplication($post);
+                          
+                            if ($response) {
+                                set_alert('success', translate('information_has_been_saved_successfully'));
+                            }
+                            redirect(base_url('job/viewApplicationDetail/'.$applicationId));
+                                    
+                }
+                
+                
+                $application_details = $this->job_model->getApplicationDetail($applicationId);
+                //print_r($application_details);
+               
+                $education = $this->education_model->getEducationByApplicant($application_details['id']);
+                $document = $this->document_model->getDocumentByApplicant($application_details['id']);
+             
+                $experience = $this->experience_model->getExperienceByApplicant($application_details['id']);
+               
+                $certification = $this->certification_model->getCertificationsByApplicant($application_details['id']);
+               
+               // die;
+             
+                if (!$application_details) {
+                    show_404(); // Show 404 if job is not found
+                }
+               
+             
+                $this->data['application'] = $application_details;
+                $this->data['certifications'] = $certification;
+                $this->data['experience'] = $experience;
+                $this->data['education'] = $education;
+                $this->data['document'] = $document;
+                $this->data['title'] = 'Application Detail';
+                $this->data['sub_page'] = 'job/viewApplicationDetail';
+                $this->data['main_menu'] = 'jobs';
+               
+                $this->load->view('layout/index', $this->data);
+        } else {
+            $this->session->set_userdata('last_page', current_url());
+            redirect(base_url(), 'refresh');
         }
-        
-        
-        $application_details = $this->job_model->getApplicationDetail($applicationId);
-        //print_r($application_details);
-       
-        $education = $this->education_model->getEducationByApplicant($application_details['id']);
-        $document = $this->document_model->getDocumentByApplicant($application_details['id']);
-     
-        $experience = $this->experience_model->getExperienceByApplicant($application_details['id']);
-       
-        $certification = $this->certification_model->getCertificationsByApplicant($application_details['id']);
-       
-       // die;
-     
-        if (!$application_details) {
-            show_404(); // Show 404 if job is not found
-        }
-       
-     
-        $this->data['application'] = $application_details;
-        $this->data['certifications'] = $certification;
-        $this->data['experience'] = $experience;
-        $this->data['education'] = $education;
-        $this->data['document'] = $document;
-        $this->data['title'] = 'Application Detail';
-        $this->data['sub_page'] = 'job/viewApplicationDetail';
-        $this->data['main_menu'] = 'jobs';
-       
-        $this->load->view('layout/index', $this->data);
-
     }
     public function applications()
     {
         
-        $jobs = $this->job_model->getApplications();
-        
-       
-        
+        if ($this->input->post('submit') == 'updateShort') {
+                
+           
+            $post = $this->input->post();
+           
+                    $response = $this->applicants_model->updateJobApplication($post);
+                
+                    if ($response) {
+                        set_alert('success', translate('information_has_been_saved_successfully'));
+                    }
+                    redirect(base_url('/job/applications/'));
+                            
+        }
+        $jobs = $this->job_model->getApplications(); 
         $this->data['jobs'] = $jobs;
         
         $this->data['title'] = 'Applications';
@@ -292,8 +999,7 @@ class Job extends Admin_Controller
         $params['data'] = $id;
         $this->ciqrcode->generate($params);
     }
-    
-    
+
     public function downloadRollNoSlip($applicationId)
     {
         
@@ -343,11 +1049,11 @@ class Job extends Admin_Controller
             }
             else{
                
-                if($jobApplication['status']=='Active')
-                {
+                //if($jobApplication['status']=='Active')
+                //{
                     $userID = get_loggedin_user_id();
-                    if($jobApplication['job_end_date'] > date("Y-m-d"))
-                    {
+                    //if($jobApplication['job_end_date'] >= date("Y-m-d"))
+                //    {
                        if($this->applicants_model->isAlreadyApplied($userID,$post['job_id']))
                             {
                                 $this->form_validation->set_rules('payment_date', translate('payment_date'),'required');
@@ -372,15 +1078,15 @@ class Job extends Admin_Controller
                                 set_alert('error', 'You need to apply first');
                               
                             }
-                    }
-                    else{
+                  //  }
+            //        else{
                         set_alert('error', 'Job Is Not Active');
-                    }
+              //      }
                   
-                }
-                else{
-                    set_alert('error', 'Job Is Not Active');
-                }
+            //    }
+              //  else{
+                //    set_alert('error', 'Job Is Not Active');
+            //    }
             }
         
         }
@@ -398,364 +1104,7 @@ class Job extends Admin_Controller
         $this->load->view('layout/index', $this->data);
 
     }
-    public function paymentModeSelection($applicationId)
-    {
-      
-        $global_config = $this->db->get_where('global_settings', ['id' => 1])->row_array();
     
-       
-            $post = $this->input->post();
-            $jobApplication = $this->job_model->getChallanDetail($applicationId);
-          
-            if (!$jobApplication) {
-              
-                show_404();
-            } else {
-               /// print_r($jobApplication);
-               
-                if ($jobApplication['status'] == 'Active' && $jobApplication['job_end_date'] >= date("Y-m-d")) {
-                    //print_r($jobApplication);
-                    
-                    $userID = get_loggedin_user_id();
-                    if ($this->applicants_model->isAlreadyApplied($userID, $jobApplication['id'])) {
-                        //print_r($jobApplication);
-                        
-                            $parameters = [
-                                "pp_Version" => "1.1",
-                                "pp_TxnType" => "MPAY",
-                                "pp_Language" => "EN",
-                                "pp_MerchantID" => $global_config['jc_merchant_id'],
-                                "pp_Password" => $global_config['jc_merchant_pwd'],
-                                "pp_Amount" => $jobApplication['challan_amount'] * 100,
-                                "pp_BillReference" => $jobApplication['unique_id'],
-                                "pp_Description" => "Challan Payment for " .$jobApplication['unique_id'],
-                                "pp_TxnCurrency" => "PKR",
-                                "pp_TxnDateTime" => date("YmdHis"),
-                                "pp_TxnExpiryDateTime" => date("YmdHis", strtotime("+1 day")),
-                                "pp_TxnRefNo" => uniqid("T"),
-                                "pp_ReturnURL" => $global_config['jc_return_url'], // Adjust this to your return URL
-                                "ppmpf_1" => $jobApplication['job_id'],
-                                "ppmpf_2" => $jobApplication['applicant_id'],
-                                "ppmpf_3" => $jobApplication['organization'],
-                                "ppmpf_4" => $jobApplication['designation']
-                            ];
-    
-                            $payment_session = [
-                                'transaction_id' => $jobApplication['unique_id'],
-                                'user_id' => $userID ,
-                                'session_data' => serialize($this->session->userdata()),
-                            ];
-                            $this->db->insert('payment_sessions', $payment_session);
-                            // Generate secure hash
-                            $integritySalt = $global_config['jc_merchant_is'];
-                            $parameters["pp_SecureHash"] = $this->generateSecureHash($parameters, $integritySalt);
-    
-                            
-                        
-                    } else {
-                        set_alert('error', 'You need to apply first');
-                      ;
-                    }
-                } else {
-                    set_alert('error', 'Job Is Not Active');
-                   
-                }
-            }
-       
-      
-      
-        $this->data['jobApplication'] = $jobApplication;
-        $this->data['parameters'] = $parameters;
-        $this->data['url'] = $global_config['jc_card_url'];
-        $this->data['title'] = 'Payment Model Selection';
-        $this->data['sub_page'] = 'job/paymentModeSelection';
-        $this->data['main_menu'] = 'jobs';
-      
-        $this->load->view('layout/index', $this->data);
-
-    }
-    function generateSecureHash($parameters, $integritySalt) {
-        ksort($parameters); // Sort by key in ascending order
-        $sortedString = $integritySalt; // Start with the integrity salt
-        foreach ($parameters as $key => $value) {
-            if ($value !== "") {
-                $sortedString .= '&' . $value; // Concatenate each value
-            }
-        }
-        return strtoupper(hash_hmac('sha256', $sortedString, $integritySalt));
-    }
-    public function payChallanViaCard($applicationId=0)
-    {
-        $global_config = $this->db->get_where('global_settings', ['id' => 1])->row_array();
-    
-        if (!$this->input->post()) {
-            $post = $this->input->post();
-            $jobApplication = $this->job_model->getChallanDetail($applicationId);
-    
-            if (!$jobApplication) {
-              
-                show_404();
-            } else {
-               /// print_r($jobApplication);
-               
-                if ($jobApplication['status'] == 'Active' && $jobApplication['job_end_date'] > date("Y-m-d")) {
-                    //print_r($jobApplication);
-                    
-                    $userID = get_loggedin_user_id();
-                    if ($this->applicants_model->isAlreadyApplied($userID, $jobApplication['id'])) {
-                        //print_r($jobApplication);
-                        
-                            $parameters = [
-                                "pp_Version" => "1.1",
-                                "pp_TxnType" => "MPAY",
-                                "pp_Language" => "EN",
-                                "pp_MerchantID" => $global_config['jc_merchant_id'],
-                                "pp_Password" => $global_config['jc_merchant_pwd'],
-                                "pp_Amount" => $jobApplication['challan_amount'] * 100,
-                                "pp_BillReference" => $jobApplication['unique_id'],
-                                "pp_Description" => "Challan Payment for " .$jobApplication['unique_id'],
-                                "pp_TxnCurrency" => "PKR",
-                                "pp_TxnDateTime" => date("YmdHis"),
-                                "pp_TxnExpiryDateTime" => date("YmdHis", strtotime("+1 day")),
-                                "pp_TxnRefNo" => uniqid("T"),
-                                "pp_ReturnURL" => $global_config['jc_return_url'], // Adjust this to your return URL
-                                "ppmpf_1" => $jobApplication['job_id'],
-                                "ppmpf_2" => $jobApplication['applicant_id'],
-                                "ppmpf_3" => $jobApplication['organization'],
-                                "ppmpf_4" => $jobApplication['designation']
-                            ];
-    
-                            // Generate secure hash
-                            $integritySalt = $global_config['jc_merchant_is'];
-                            $parameters["pp_SecureHash"] = $this->generateSecureHash($parameters, $integritySalt);
-    
-                            // Directly output the form and submit it automatically
-                            echo '<html><body>';
-                            echo '<form id="autoSubmitForm" method="post" action="' . $global_config['jc_card_url'] . '">';
-                            foreach ($parameters as $key => $value) {
-                                echo '<input type="hidden" name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($value) . '">';
-                            }
-                            echo '</form>';
-                            
-                            // Add session keep-alive script
-                            echo '<script>
-                                setInterval(function() {
-                                    fetch("' . base_url('keep-alive') . '", { method: "GET" });
-                                }, 300000); // Keep session alive every 5 minutes
-                            
-                                document.getElementById("autoSubmitForm").submit();
-                            </script>';
-                            echo '</body></html>';
-                            exit();
-                        
-                    } else {
-                        set_alert('error', 'You need to apply first');
-                        redirect('job/apply/'.$applicationId);
-                    }
-                } else {
-                    set_alert('error', 'Job Is Not Active');
-                    redirect('job/apply/'.$applicationId);
-                }
-            }
-        } else {
-            redirect('job/apply/'.$applicationId); // Redirect if no submission
-        }
-    }
-    public function payChallan($applicationId)
-    {
-      
-        $global_config = $this->db->get_where('global_settings',array('id'=>1))->row_array();
-      
-        if ($this->input->post('submit') == 'update') {
-            
-            $post = $this->input->post();
-                
-            $jobApplication = $this->job_model->getChallanDetail($post['job_application_id']);
-           
-        
-            if (!$jobApplication) {
-                show_404(); // Show 404 if job is not found
-            }
-            else{
-               
-                if($jobApplication['status']=='Active')
-                {
-                    $userID = get_loggedin_user_id();
-                    if($jobApplication['job_end_date'] > date("Y-m-d"))
-                    {
-                       if($this->applicants_model->isAlreadyApplied($userID,$post['job_id']))
-                            {
-                                
-                                $this->form_validation->set_rules('pp_MobileNumber', translate('pp_MobileNumber'),'required');
-                                $this->form_validation->set_rules('pp_BillReference', translate('pp_BillReference'), 'required');
-                                $this->form_validation->set_rules('pp_CNIC', translate('pp_CNIC'), 'required');
-                                $this->form_validation->set_rules('pp_Description', translate('pp_Description'), 'required');
-                                $this->form_validation->set_rules('pp_MobileNumber', translate('pp_MobileNumber'), 'required');
-                                if ($this->form_validation->run() == true) {
-
-                                    $parameters = [
-                                        "pp_Amount" => $post['pp_Amount'], // Amount in paisas
-                                        "pp_BillReference" => $post['pp_BillReference'],
-                                        "pp_CNIC" =>$post['pp_CNIC'],
-                                        "pp_Description" => $post['pp_Description'],
-                                        "pp_Language" => "EN",
-                                        "pp_MerchantID" => $global_config['jc_merchant_id'],
-                                        "pp_MobileNumber" => $post['pp_MobileNumber'],
-                                        "pp_Password" => $global_config['jc_merchant_pwd'],
-                                        "pp_TxnCurrency" => "PKR",
-                                        "pp_TxnDateTime" => date("YmdHis"),
-                                        "pp_TxnExpiryDateTime" => date("YmdHis", strtotime("+1 day")),
-                                        "pp_TxnRefNo" => uniqid("T"),
-                                        "ppmpf_1"=>$post['job_id'],
-                                        "ppmpf_2"=>$post['applicant_id']
-                                    ];
-                                    
-                                    $integritySalt = $global_config['jc_merchant_is']; // Replace with actual integrity salt
-                                    $parameters["pp_SecureHash"] = $this->generateSecureHash($parameters, $integritySalt);
-                                    
-                                    $apiUrl = $global_config['jc_testing_url'];
-                                    $ch = curl_init($apiUrl);
-                                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                                    curl_setopt($ch, CURLOPT_POST, true);
-                                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($parameters));
-                                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                                        'Content-Type: application/json',
-                                    ]);
-
-                                    $response = curl_exec($ch);
-                                    if (curl_errno($ch)) {
-                                     
-                                        set_alert('error', "Curl Error: " . curl_error($ch));
-                                        
-                                    } else {
-                                        $decodedResponse = json_decode($response, true);
-                                      
-                                        if ($decodedResponse && $decodedResponse['pp_ResponseCode'] === "000") {
-                                  
-                                            $txnDateTime = $decodedResponse['pp_TxnDateTime'];
-
-                                            $date = substr($txnDateTime, 0, 4) . '-' . substr($txnDateTime, 4, 2) . '-' . substr($txnDateTime, 6, 2);
-                                            $time = substr($txnDateTime, 8, 2) . ':' . substr($txnDateTime, 10, 2) . ':' . substr($txnDateTime, 12, 2);
-                                            $formattedDateTime = $date . ' ' . $time;
-                                            
-                                            $data['payment_date'] = $formattedDateTime;
-                                            $data['amount'] = $decodedResponse['pp_Amount']/100;
-                                            $data['transaction_id'] = $decodedResponse['pp_TxnRefNo'];
-                                            $data['bank_name'] = 'JazzCash Wallet';
-                                            $data['job_application_id'] = $decodedResponse['pp_BillReference'];
-                                            $data['company_name'] = $post['company_name'];
-                                            $data['job_position'] = $post['job_position'];
-                                            $data['payment_mode'] = "JazzCash Wallet";
-                                            $data['status_id'] = 16;
-                                            $data['payment_response_code'] = $decodedResponse['pp_ResponseCode'];
-                                            $data['payment_response'] = json_encode($decodedResponse);
-                                            $response = $this->applicants_model->updatePayment($data);
-                                           
-                                            if ($response) {
-                                                
-                                                set_alert('success', $decodedResponse['pp_ResponseMessage']);
-                                                redirect(base_url('job/viewJobs'));
-                                               
-                                            }
-                                            else{
-                                                set_alert('error', $decodedResponse['pp_ResponseMessage']);
-                                            }
-
-                                                
-                                          
-                                        } else {
-                                    
-                                            set_alert('error', $decodedResponse['pp_ResponseMessage']);
-                                        }
-                                    }
-                                   
-                                }
-                                else{
-                                    set_alert('error', 'Required Data Is Missing');
-                                } 
-                               
-                            }
-                            else{
-                          
-                                set_alert('error', 'You need to apply first');
-                              
-                            }
-                    }
-                    else{
-                        set_alert('error', 'Job Is Not Active');
-                    }
-                  
-                }
-                else{
-                    set_alert('error', 'Job Is Not Active');
-                }
-            }
-        
-        }
-        $jobApplication = $this->job_model->getChallanDetail($applicationId);
-        
-        if (!$jobApplication) {
-            show_404(); // Show 404 if job is not found
-        }
-        
-        $this->data['jobApplication'] = $jobApplication;
-        $this->data['title'] = 'Pay Challan';
-        $this->data['sub_page'] = 'job/payChallan';
-        $this->data['main_menu'] = 'jobs';
-       
-        $this->load->view('layout/index', $this->data);
-
-    }
-    public function ipn_listener() {
-    //    echo "askjdhaskjdhkjashdkjashkjdhsa";
-        // Read the JSON payload from the POST request
-        //$input = file_get_contents('php://input');
-        $decodedResponse = $_POST;
-        print_r($decodedResponse);
-        if ($decodedResponse && $decodedResponse['pp_ResponseCode'] === "000") {
-                                  
-            $txnDateTime = $decodedResponse['pp_TxnDateTime'];
-
-            $date = substr($txnDateTime, 0, 4) . '-' . substr($txnDateTime, 4, 2) . '-' . substr($txnDateTime, 6, 2);
-            $time = substr($txnDateTime, 8, 2) . ':' . substr($txnDateTime, 10, 2) . ':' . substr($txnDateTime, 12, 2);
-            $formattedDateTime = $date . ' ' . $time;
-            
-            $data['payment_date'] = $formattedDateTime;
-            $data['amount'] = $decodedResponse['pp_Amount']/100;
-            $data['transaction_id'] = $decodedResponse['pp_TxnRefNo'];
-            $data['bank_name'] = 'Card Payment';
-            $data['job_application_id'] = $decodedResponse['pp_BillReference'];
-            $data['company_name'] = $decodedResponse['company_name'];
-            $data['job_position'] = $decodedResponse['job_position'];
-            
-            $response = $this->applicants_model->updateChallan($data);
-           
-            if ($response) {
-                
-                set_alert('success', $decodedResponse['pp_ResponseMessage']);
-               
-            }
-            else{
-                set_alert('error', $decodedResponse['pp_ResponseMessage']);
-            }
-
-                
-          
-        } else {
-    
-            set_alert('error', $decodedResponse['pp_ResponseMessage']);
-        }
-    }
-    
-
-    // Validate IPN payload (e.g., verify secure hash, required fields)
-    private function validate_ipn($data) {
-        if (!isset($data['pp_SecureHash'])) {
-            return false;
-        }
-        // Implement additional validation logic here (e.g., hash comparison)
-        return true;
-    }
     public function viewJobs()
     {
 
@@ -774,7 +1123,7 @@ class Job extends Admin_Controller
                 if($job['status']=='Active')
                 {
                  
-                    if($job['job_end_date'] > date("Y-m-d"))
+                    if($job['job_end_date'] >= date("Y-m-d"))
                     {
                         $userID = get_loggedin_user_id();
                        // if($this->applicants_model->getApplicantEducation($userID))
@@ -788,7 +1137,7 @@ class Job extends Admin_Controller
                                 if ($response) {
                                     set_alert('success', translate('information_has_been_saved_successfully'));
                                 }
-                                redirect(base_url('job/paymentModeSelection/'.$response));
+                                redirect(base_url('job/challans'));
                             }
                             else{
                           

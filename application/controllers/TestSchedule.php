@@ -14,8 +14,8 @@ class TestSchedule extends Admin_Controller
     // Index - Display list and create form
     public function index()
     {
-        if (is_superadmin_loggedin()) {
-            if ($this->input->post('submit') == 'save') {
+        if (!is_applicant_loggedin()) {
+            if ($this->input->post('submit') == 'save' && is_superadmin_loggedin()) {
                 $this->form_validation->set_rules('test_center_id', 'Test Center', 'trim|required');
                 $this->form_validation->set_rules('job_id', 'Job', 'trim|required');
                 $this->form_validation->set_rules('test_date', 'Date', 'trim|required');
@@ -50,34 +50,7 @@ class TestSchedule extends Admin_Controller
         $this->load->view('layout/index', $this->data);
     }
 
-    // Save schedule (create or update)
-    public function save()
-    {
-
-        $this->form_validation->set_rules('test_name', 'Test Name', 'trim|required');
-        $this->form_validation->set_rules('test_center_id', 'Test Center', 'trim|required');
-        $this->form_validation->set_rules('job_id', 'Job', 'trim|required');
-        $this->form_validation->set_rules('date', 'Date', 'trim|required');
-        $this->form_validation->set_rules('start_time', 'Start Time', 'trim|required');
-        $this->form_validation->set_rules('end_time', 'End Time', 'trim|required');
-        $this->form_validation->set_rules('seats_available', 'Seats Available', 'trim|required|integer');
-        $this->form_validation->set_rules('status', 'Status', 'trim|required');
-     
-        if ($this->form_validation->run() !== false) {
-            $id = $this->input->post('id'); // Hidden field for editing
-            $data = $this->input->post();
-        
-            $this->Test_Schedule_model->save($data, $id);
-
-            set_alert('success', 'Test schedule has been saved successfully.');
-            redirect(base_url('test_schedule'));
-        } else {
-            // Reload with validation errors
-            $this->data['validation_error'] = true;
-            $this->index();
-        }
-    }
-
+   
     // Edit schedule - Populate the form with existing data
     public function edit($id)
     {

@@ -34,8 +34,82 @@ class Job_model extends MY_Model
     public function getQualifications() {
         return $this->getSelectList('qualification');
     }
-// In your model (e.g., JobModel.php)
 
+
+public function validateTransaction($data)
+{
+    $sql = "SELECT *
+FROM
+    job_applicants j
+WHERE j.transaction_id = ?
+GROUP BY j.id";
+
+$isExist  = $this->db->query($sql, [$data['pp_TxnRefNo']])->row_array();
+return $isExist;
+}   
+
+public function getReceiptDetail($applicationId) {
+    $applicant_id = get_loggedin_user_id();
+    $sql = "SELECT
+                 j.id,q.name as qouta, o.name as organization, o.industry, l.name as location,
+                d.name as designation, jt.name as job_type,  CASE j.is_active WHEN 1 THEN 'Active' ELSE 'Inactive' END as status,
+                 ja.application_date,ja.applicant_id,
+                 ss.name as job_status,ja.unique_id,ja.status_id, ja.payment_date, ja.amount, ja.transaction_id,ja.bank_name, ja.application_date,ja.payment_mode,j.challan_amount, ja.payment_response
+            FROM
+                job j
+            INNER JOIN qouta q ON j.qouta_id = q.id
+            INNER JOIN organization o ON j.organization_id = o.id
+            INNER JOIN designation d ON j.designation_id = d.id
+            INNER JOIN job_type jt ON j.job_type_id = jt.id
+            INNER JOIN location l ON l.id = j.location_id
+            INNER JOIN job_qualification jq ON j.id = jq.job_id
+            INNER JOIN qualification qf ON jq.qualification_id = qf.id
+            INNER JOIN job_applicants ja ON ja.job_id = j.id AND ja.applicant_id = $applicant_id
+            INNER JOIN status ss ON ja.status_id = ss.id
+            WHERE ja.unique_id='$applicationId'";
+
+    return $this->db->query($sql)->row_array();
+}
+public function validateTransaction1($transactionNo)
+{
+    $sql = "SELECT *
+FROM
+    job_applicants j
+WHERE j.transaction_id = ?
+GROUP BY j.id";
+
+$isExist  = $this->db->query($sql, $transactionNo)->row_array();
+return $isExist;
+}  
+public function updatePaymentIPN($data)
+{
+    $sql = "SELECT *
+FROM
+    job_applicants j
+WHERE j.transaction_id = ?
+GROUP BY j.id";
+
+$isExist  = $this->db->query($sql, [$data['pp_TxnRefNo']])->row_array();
+        
+if($isExist)
+{
+    $insert_data = array(
+        'ipn_payment_date' => $data['ipn_payment_date'],
+        'ipn_pp_TxnType' => $data['ipn_pp_TxnType'],
+        'ipn_pp_responseCode' => $data['ipn_pp_responseCode'],
+        'ipn_pp_responseMessage' => $data['ipn_pp_responseMessage'],
+        'ipn_pp_response' =>  $data['ipn_pp_response'],
+        'status_id' => $data['status_id']
+    );
+    $this->db->where('transaction_id', $data['pp_TxnRefNo']);
+    $this->db->update('job_applicants', $insert_data);
+}     
+return  $data['pp_TxnRefNo'];
+
+
+      
+      
+}
 public function getJobDetails($job_id) {
     $sql = "SELECT
                 j.*, q.name as qouta, o.name as organization, o.industry, l.name as location,
@@ -50,7 +124,7 @@ public function getJobDetails($job_id) {
             INNER JOIN job_qualification jq ON j.id = jq.job_id
             INNER JOIN qualification qf ON jq.qualification_id = qf.id
             WHERE j.id = ?
-            GROUP BY j.id";
+            GROUP BY j.id order by j.is_active desc,j.id asc ";
 
     return $this->db->query($sql, [$job_id])->row_array();
 }
@@ -83,7 +157,7 @@ public function getJobDetailsUser($job_id) {
             LEFT JOIN job_applicants ja ON ja.job_id = j.id AND ja.applicant_id = $applicant_id
             LEFT JOIN status ss ON ja.status_id = ss.id 
             WHERE j.id = ?
-            GROUP BY j.id";
+            GROUP BY j.id order by j.is_active desc,j.id asc";
 
     return $this->db->query($sql, [$job_id])->row_array();
 }
@@ -103,8 +177,6 @@ public function getChallans() {
             INNER JOIN designation d ON j.designation_id = d.id
             INNER JOIN job_type jt ON j.job_type_id = jt.id
             INNER JOIN location l ON l.id = j.location_id
-            INNER JOIN job_qualification jq ON j.id = jq.job_id
-            INNER JOIN qualification qf ON jq.qualification_id = qf.id
             INNER JOIN job_applicants ja ON ja.job_id = j.id AND ja.applicant_id = $applicant_id
             INNER JOIN status ss ON ja.status_id = ss.id 
             WHERE ja.status_id in (9,16)";
@@ -123,8 +195,6 @@ public function getJobsSyllabus() {
             INNER JOIN designation d ON j.designation_id = d.id
             INNER JOIN job_type jt ON j.job_type_id = jt.id
             INNER JOIN location l ON l.id = j.location_id
-            INNER JOIN job_qualification jq ON j.id = jq.job_id
-            INNER JOIN qualification qf ON jq.qualification_id = qf.id
             INNER JOIN job_applicants ja ON ja.job_id = j.id AND ja.applicant_id = $applicant_id
             INNER JOIN status ss ON ja.status_id = ss.id 
             WHERE ja.status_id in (9,16)";
@@ -145,8 +215,6 @@ public function getRollnoSlips() {
             INNER JOIN designation d ON j.designation_id = d.id
             INNER JOIN job_type jt ON j.job_type_id = jt.id
             INNER JOIN location l ON l.id = j.location_id
-            INNER JOIN job_qualification jq ON j.id = jq.job_id
-            INNER JOIN qualification qf ON jq.qualification_id = qf.id
             INNER JOIN job_applicants ja ON ja.job_id = j.id AND ja.applicant_id = $applicant_id
             INNER JOIN status ss ON ja.status_id = ss.id 
             INNER JOIN test_schedule ts ON ja.test_schedule_id = ts.id
@@ -163,7 +231,7 @@ public function getApplications() {
                 d.name as designation, jt.name as job_type,  CASE j.is_active WHEN 1 THEN 'Active' ELSE 'Inactive' END as status,
                  ja.application_date,
                  ss.name as job_status,ja.unique_id,ja.status_id, ja.payment_date, ja.amount, ja.transaction_id,ja.bank_name, ja.application_date,
-                 a.name as applicant_name, a.cnic, a.mobileno, a.birthday, a.sex,a.email,ja.remarks
+                 a.name as applicant_name, a.cnic, a.mobileno, a.birthday, a.sex,a.email,ja.remarks,ja.image_path
             FROM
                 job j
             INNER JOIN qouta q ON j.qouta_id = q.id
@@ -185,7 +253,7 @@ public function getApplicationDetail($applicationId) {
                  a.*,q.name as qouta, o.name as organization, o.industry, l.name as location,
                 d.name as designation, jt.name as job_type,  CASE j.is_active WHEN 1 THEN 'Active' ELSE 'Inactive' END as status,
                  ja.application_date,ja.image_path,
-                 ss.name as job_status,ja.unique_id,ja.status_id, ja.payment_date, ja.amount, ja.transaction_id,ja.bank_name, ja.application_date, j.challan_amount,ts.name as schedule_name,tc.name as center,ts.date,ts.start_time,ts.end_time,ja.payment_mode
+                 ss.name as job_status,ja.unique_id,ja.status_id, ja.payment_date, ja.amount, ja.transaction_id,ja.bank_name, ja.application_date, j.challan_amount,ts.name as schedule_name,tc.name as center,ts.date,ts.start_time,ts.end_time
             FROM
                 job j
             INNER JOIN qouta q ON j.qouta_id = q.id
@@ -210,7 +278,7 @@ public function getChallanDetail($applicationId) {
     $sql = "SELECT
                 j.*, q.name as qouta, o.name as organization, o.industry, l.name as location,
                 d.name as designation, jt.name as job_type,  CASE j.is_active WHEN 1 THEN 'Active' ELSE 'Inactive' END as status,
-                 ja.application_date,ja.applicant_id,
+                 ja.application_date,
                  ss.name as job_status,ja.unique_id,ja.status_id, ja.payment_date, ja.amount, ja.transaction_id,ja.bank_name, ja.application_date,ja.payment_mode,j.challan_amount
             FROM
                 job j
@@ -219,8 +287,6 @@ public function getChallanDetail($applicationId) {
             INNER JOIN designation d ON j.designation_id = d.id
             INNER JOIN job_type jt ON j.job_type_id = jt.id
             INNER JOIN location l ON l.id = j.location_id
-            INNER JOIN job_qualification jq ON j.id = jq.job_id
-            INNER JOIN qualification qf ON jq.qualification_id = qf.id
             INNER JOIN job_applicants ja ON ja.job_id = j.id AND ja.applicant_id = $applicant_id
             INNER JOIN status ss ON ja.status_id = ss.id
             WHERE ja.status_id in (9,16) and ja.unique_id='$applicationId'";
@@ -295,7 +361,7 @@ public function getChallanDetail($applicationId) {
         }
     
         // Grouping and limiting the results
-        $sql .= " GROUP BY j.id";
+        $sql .= " GROUP BY j.id order by j.is_active desc,j.id asc";
         $sql .= " LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
     
         // Execute the query and return the results
@@ -380,7 +446,7 @@ public function getChallanDetail($applicationId) {
         }
     
         // Grouping and limiting the results
-        $sql .= " GROUP BY j.id";
+        $sql .= " GROUP BY j.id order by j.is_active desc,j.id asc";
         $sql .= " LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
     
         // Execute the query and return the results

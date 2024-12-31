@@ -4,6 +4,10 @@ class MY_Model extends CI_Model {
 
 	function __construct() {
 		parent::__construct();
+		  if (!$this->db->conn_id || !$this->db->conn_id->ping()) {
+            $this->db->reconnect(); // Attempt to reconnect
+        }
+
 	}
 
 	public function hash($password) {
@@ -58,14 +62,21 @@ class MY_Model extends CI_Model {
 		return $result;
     }
 
-    public function getSingle($table, $id = NULL, $single = false)
-    {
-        if ($single == true) {
-            $method = 'row';
-        } else {
-            $method = 'result';
-        }
-        $q = $this->db->query("SELECT * FROM " . $table . " WHERE id = " . $this->db->escape($id));
-		return $q->$method();
+   public function getSingle($table, $id = NULL, $single = false)
+{
+    // Determine the result fetching method
+    $method = $single ? 'row' : 'result';
+
+    try {
+        // Ensure the database connection is alive
+      
+        // Execute the query
+        $q = $this->db->query("SELECT * FROM " . $this->db->escape_str($table) . " WHERE id = " . $this->db->escape($id));
+        return $q->$method();
+    } catch (Exception $e) {
+        log_message('error', 'Database error: ' . $e->getMessage());
+        return false; // Return false or handle the error as needed
     }
+}
+
 }

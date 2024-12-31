@@ -15,6 +15,28 @@
                             <i class="fas fa-user"></i><span>Dashboard</span>
                         </a>
                     </li>
+                    <?php if (is_executive_loggedin()) : ?>
+                    <li class="<?php if ($main_menu == 'job') echo 'nav-active';?>">
+                        <a href="<?=base_url('job')?>">
+                            <i class="fas fa-briefcase"></i><span>Jobs</span>
+                        </a>
+                    </li>
+                     <li class="<?php if ($main_menu == 'organization') echo 'nav-active';?>">
+                        <a href="<?=base_url('organization')?>">
+                            <i class="fas fa-building"></i><span>Organizations</span>
+                        </a>
+                    </li>
+                    <li class="<?php if ($main_menu == 'testSchedule') echo 'nav-active';?>">
+                        <a href="<?=base_url('testSchedule')?>">
+                            <i class="fas fa-briefcase"></i><span>Test Schedule</span>
+                        </a>
+                    </li>
+                     <li class="<?php if ($main_menu == 'testCenters') echo 'nav-active';?>">
+                        <a href="<?=base_url('testCenters')?>">
+                            <i class="fas fa-briefcase"></i><span>Test Centers</span>
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <?php if (is_superadmin_loggedin()) : ?>
                     <!-- branch -->
                     <li class="<?php if ($main_menu == 'organization') echo 'nav-active';?>">
@@ -37,6 +59,21 @@
                             <i class="fas fa-map-marker-alt"></i><span>Location</span>
                         </a>
                     </li>
+                    <li class="<?php if ($main_menu == 'city') echo 'nav-active';?>">
+                        <a href="<?=base_url('city')?>">
+                            <i class="fas fa-map-marker-alt"></i><span>City</span>
+                        </a>
+                    </li>
+                    <li class="<?php if ($main_menu == 'province') echo 'nav-active';?>">
+                        <a href="<?=base_url('province')?>">
+                            <i class="fas fa-map-marker-alt"></i><span>Provice</span>
+                        </a>
+                    </li>
+                    <li class="<?php if ($main_menu == 'district') echo 'nav-active';?>">
+                        <a href="<?=base_url('district')?>">
+                            <i class="fas fa-map-marker-alt"></i><span>District</span>
+                        </a>
+                    </li>
                     <li class="<?php if ($main_menu == 'job_type') echo 'nav-active';?>">
                         <a href="<?=base_url('job_type')?>">
                             <i class="fas fa-id-badge"></i><span>Job types</span>
@@ -53,27 +90,11 @@
                             <i class="fas fa-briefcase"></i><span>Jobs</span>
                         </a>
                     </li>
-                    <li class="<?php if ($main_menu == 'job/applications') echo 'nav-active';?>">
-                        <a href="<?=base_url('job/applications')?>">
-                            <i class="fas fa-briefcase"></i><span>Job Applications</span>
-                        </a>
-                    </li>
-                    <li class="<?php if ($main_menu == 'users') echo 'nav-active';?>">
-                        <a href="<?=base_url('applicants')?>">
-                            <i class="fas fa-briefcase"></i><span>Users</span>
-                        </a>
-                    </li>
-                    <li class="<?php if ($main_menu == 'docType') echo 'nav-active';?>">
+                     <li class="<?php if ($main_menu == 'docType') echo 'nav-active';?>">
                         <a href="<?=base_url('docType')?>">
                             <i class="fas fa-file"></i><span>Document Types</span>
                         </a>
                     </li>
-                  
-                    <!--<li class="<?php if ($main_menu == 'status') echo 'nav-active';?>">
-                        <a href="<?=base_url('status')?>">
-                            <i class="fas fa-briefcase"></i><span>Status</span>
-                        </a>
-                    </li>!-->
                     <li class="<?php if ($main_menu == 'testCenters') echo 'nav-active';?>">
                         <a href="<?=base_url('testCenters')?>">
                             <i class="fas fa-briefcase"></i><span>Test Centers</span>
@@ -85,7 +106,26 @@
                             <i class="fas fa-briefcase"></i><span>Test Schedule</span>
                         </a>
                     </li>
-
+                    <li class="<?php if ($main_menu == 'job/applications') echo 'nav-active';?>">
+                        <a href="<?=base_url('job/applications')?>">
+                            <i class="fas fa-briefcase"></i><span>Job Applications</span>
+                        </a>
+                    </li>
+                    <li class="<?php if ($main_menu == 'users') echo 'nav-active';?>">
+                        <a href="<?=base_url('applicants')?>">
+                            <i class="fas fa-briefcase"></i><span>Users</span>
+                        </a>
+                    </li>
+                    <li class="<?php if ($main_menu == 'contactUs') echo 'nav-active';?>">
+                        <a href="<?=base_url('contactUs')?>">
+                            <i class="fas fa-briefcase"></i><span>Applicant Queries</span>
+                        </a>
+                    </li>
+                    <!--<li class="<?php if ($main_menu == 'status') echo 'nav-active';?>">
+                        <a href="<?=base_url('status')?>">
+                            <i class="fas fa-briefcase"></i><span>Status</span>
+                        </a>
+                    </li>!-->
                    
                     <?php endif; ?>
                     
@@ -118,14 +158,14 @@
                             <i class="fas fa-briefcase"></i><span>Jobs</span>
                         </a>
                     </li>
+                     <li class="<?php if ($main_menu == 'syllabus') echo 'nav-active';?>">
+                        <a href="<?=base_url('syllabus')?>">
+                            <i class="fas fa-file"></i><span>Test Syllabus</span>
+                        </a>
+                    </li>
                     <li class="<?php if ($main_menu == 'job/challans') echo 'nav-active';?>">
                         <a href="<?=base_url('job/challans')?>">
                             <i class="fas fa-briefcase"></i><span>Challans</span>
-                        </a>
-                    </li>
-                    <li class="<?php if ($main_menu == 'job/rollNoSlips') echo 'nav-active';?>">
-                        <a href="<?=base_url('job/rollNoSlips')?>">
-                            <i class="fas fa-briefcase"></i><span>Roll No Slips</span>
                         </a>
                     </li>
                     <li class="<?php if ($main_menu == 'document') echo 'nav-active';?>">
@@ -133,14 +173,19 @@
                             <i class="fas fa-file"></i><span>My Documents</span>
                         </a>
                     </li>
-                    <li class="<?php if ($main_menu == 'syllabus') echo 'nav-active';?>">
-                        <a href="<?=base_url('syllabus')?>">
-                            <i class="fas fa-file"></i><span>Test Syllabus</span>
+                     <li class="<?php if ($main_menu == 'job/rollNoSlips') echo 'nav-active';?>">
+                        <a href="<?=base_url('job/rollNoSlips')?>">
+                            <i class="fas fa-briefcase"></i><span>Roll No Slips</span>
                         </a>
                     </li>
-                    <li class="<?php if ($main_menu == 'declaration') echo 'nav-active';?>">
+                     <li class="<?php if ($main_menu == 'declaration') echo 'nav-active';?>">
                         <a href="<?=base_url('declaration')?>">
                             <i class="fas fa-file"></i><span>Declaration</span>
+                        </a>
+                    </li>
+                     <li class="<?php if ($main_menu == 'contactUs') echo 'nav-active';?>">
+                        <a href="<?=base_url('contactUs')?>">
+                            <i class="fas fa-briefcase"></i><span>Ask Queries?</span>
                         </a>
                     </li>
                     <?php endif; ?>

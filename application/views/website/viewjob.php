@@ -138,7 +138,10 @@
 
             <!-- Apply Button -->
             <div class="d-flex justify-content-between mt-3">
-                <a href="<?= base_url('dashboard') ?>" class="btn btn-success">Apply Now</a>
+                <?php if($job['status']=="Active" && $job['job_end_date'] >= date("Y-m-d"))  { ?>
+                <a href="<?= base_url('register') ?>" class="btn btn-success">Apply Now</a>
+                <?php } ?>   
+
             </div>
 
             <!-- Advertisement File Display/Download Section -->

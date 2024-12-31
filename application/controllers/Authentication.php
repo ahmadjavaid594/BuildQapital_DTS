@@ -77,6 +77,7 @@ class Authentication extends Authentication_Controller
                         if ($this->session->has_userdata('redirect_url')) {
                             redirect($this->session->userdata('redirect_url'));
                         } else {
+                            set_alert('success', "Logged In Successfully");
                             redirect(base_url('dashboard'));
                         }
 
@@ -93,16 +94,14 @@ class Authentication extends Authentication_Controller
         }
         $this->load->view('authentication/login', $this->data);
     }
+
     // forgot password
-    public function forgot()
+   public function forgot()
     {
         if (is_loggedin()) {
             redirect(base_url('dashboard'), 'refresh');
         }
-      
         if ($_POST) {
-        //    $this->send_email();
-        //die;
             $config = array(
                 array(
                     'field' => 'username',

@@ -234,6 +234,12 @@
                         <th>Payment Status</th>
                         <td><?= $application['payment_date'] ? 'Paid on ' . $application['payment_date'] : 'Fee Pending'; ?></td>
                     </tr>
+                      <tr>
+                        <th>Recheck Status</th>
+                        <td><a href="<?=base_url('job/checkPaymentStatus/'.$application['transaction_id'])?>" class="btn btn-warning">
+										Recheck Payment Status
+									</a></td>
+                    </tr>
                     <tr>
                         <th>Transaction ID</th>
                         <td><?= $application['transaction_id'] ?: 'Not Available'; ?></td>

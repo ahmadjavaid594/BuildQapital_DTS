@@ -38,7 +38,7 @@ class Profile_model extends MY_Model
                 $filePath = '/uploads/profile_pics/' . $fileData['file_name'];
             }
         } else {
-            $filePath = isset($data['existing_file_path']) ? $data['existing_file_path'] : null; // Use existing path if no new file is uploaded
+            $filePath = isset($data['old_user_photo']) ? $data['old_user_photo'] : null; // Use existing path if no new file is uploaded
         }
 
         if (!is_superadmin_loggedin()) {

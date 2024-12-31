@@ -137,7 +137,7 @@ foreach($languages as $lang) :
 		<div id="userbox" class="userbox">
 			<a href="#" data-toggle="dropdown">
 				<figure class="profile-picture">
-					<img src="<?php echo base_url($this->session->userdata('logger_photo'))?>" alt="user-image" class="img-circle" height="35">
+					<img src="<?php echo get_image_url(get_loggedin_user_type(), $this->session->userdata('logger_photo'));?>" alt="user-image" class="img-circle" height="35">
 				</figure>
 			</a>
 			<div class="dropdown-menu">

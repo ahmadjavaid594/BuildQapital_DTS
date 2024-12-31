@@ -385,6 +385,7 @@ $config['sess_match_ip'] = FALSE;
 $config['sess_time_to_update'] = 300;
 $config['sess_regenerate_destroy'] = FALSE;
 
+
 /*
 |--------------------------------------------------------------------------
 | Cookie Related Variables
@@ -453,8 +454,10 @@ $config['csrf_token_name'] = 'dts_csrf_name';
 $config['csrf_cookie_name'] = 'dts_cookie_name';
 $config['csrf_expire'] = 7200;
 $config['csrf_regenerate'] = FALSE;
-$config['csrf_exclude_uris'] = array('payment/response');
-
+$config['csrf_exclude_uris'] = array(
+    'payments/response',
+    'payments/ipn'
+);
 if($config['csrf_protection'] == TRUE && isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'],'feespayment/') !== FALSE){
     $config['csrf_protection'] = FALSE;
 }
@@ -527,4 +530,3 @@ $config['rewrite_short_tags'] = FALSE;
 $config['proxy_ips'] = '';
 $config['installed'] = TRUE;
 $config['product_name'] = 'dts_v1';
-$config['log_threshold'] = 4;

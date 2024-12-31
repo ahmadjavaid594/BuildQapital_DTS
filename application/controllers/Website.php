@@ -52,17 +52,17 @@ class Website extends CI_Controller
                 $schoolID = get_loggedin_branch_id();
                 $this->data['title'] = get_type_name_by_id('branch', $schoolID) . " " . translate('branch_dashboard');
             }
-            $this->data['school_id'] = $schoolID;
-            $this->data['student_by_class'] = $this->dashboard_model->getStudentByClass($schoolID);
-            $this->data['fees_summary'] = $this->dashboard_model->annualFeessummaryCharts($schoolID);
-            $this->data['income_vs_expense'] = $this->dashboard_model->getIncomeVsExpense($schoolID);
-            $this->data['weekend_attendance'] = $this->dashboard_model->getWeekendAttendance($schoolID);
-            $this->data['monthly_attendance'] = $this->dashboard_model->getMonthlyAttendance($schoolID);
-            $this->data['daily_attendance_summary'] = $this->dashboard_model->getDailyBranchWiseAttendance($schoolID);
-            $this->data['get_monthly_admission'] = $this->dashboard_model->getMonthlyAdmission($schoolID);
-            $this->data['get_voucher'] = $this->dashboard_model->getVoucher($schoolID);
-            $this->data['get_transport_route'] = $this->dashboard_model->get_transport_route($schoolID);
-            $this->data['get_total_student'] = $this->dashboard_model->get_total_student($schoolID);
+  //          $this->data['school_id'] = $schoolID;
+//            $this->data['student_by_class'] = $this->dashboard_model->getStudentByClass($schoolID);
+      //      $this->data['fees_summary'] = $this->dashboard_model->annualFeessummaryCharts($schoolID);
+           // $this->data['income_vs_expense'] = $this->dashboard_model->getIncomeVsExpense($schoolID);
+        //    $this->data['weekend_attendance'] = $this->dashboard_model->getWeekendAttendance($schoolID);
+         //   $this->data['monthly_attendance'] = $this->dashboard_model->getMonthlyAttendance($schoolID);
+          //  $this->data['daily_attendance_summary'] = $this->dashboard_model->getDailyBranchWiseAttendance($schoolID);
+    //        $this->data['get_monthly_admission'] = $this->dashboard_model->getMonthlyAdmission($schoolID);
+     //       $this->data['get_voucher'] = $this->dashboard_model->getVoucher($schoolID);
+      //      $this->data['get_transport_route'] = $this->dashboard_model->get_transport_route($schoolID);
+    //        $this->data['get_total_student'] = $this->dashboard_model->get_total_student($schoolID);
           //  $this->data['sub_page'] = 'dashboard/index';
         }
         $this->data['headerelements'] = array(
