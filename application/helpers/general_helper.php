@@ -99,6 +99,22 @@ function is_superadmin_loggedin()
     }
     return false;
 }
+function is_manager_loggedin()
+{
+    $CI = &get_instance();
+    if ($CI->session->userdata('loggedin_role_id') == 12 ) {
+        return true;
+    }
+    return false;
+}
+function is_executive_loggedin()
+{
+    $CI = &get_instance();
+    if ($CI->session->userdata('loggedin_role_id') == 11) {
+        return true;
+    }
+    return false;
+}
 function is_applicant_loggedin()
 {
     $CI = &get_instance();
@@ -116,6 +132,7 @@ function is_superadmin_only()
     }
     return false;
 }
+
 // is admin logged in @return boolean
 function is_admin_loggedin()
 {
@@ -249,6 +266,7 @@ function set_alert($type, $message)
     $CI = &get_instance();
     $CI->session->set_flashdata('alert-message-success', null);
     $CI->session->set_flashdata('alert-message-error', null);
+    $CI->session->set_flashdata('alert-message-info', null);
     $CI->session->set_flashdata('alert-message-' . $type, $message);
 }
 

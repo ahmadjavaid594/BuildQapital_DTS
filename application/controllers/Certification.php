@@ -23,7 +23,8 @@ class Certification extends Admin_Controller
     public function index()
     {
         if (is_applicant_loggedin()) {
-            if ($this->input->post('submit') == 'save') {              
+            if ($this->input->post('submit') == 'save') {
+               
                 $this->form_validation->set_rules('certification_name', translate('certification_name'), 'required');
                 $this->form_validation->set_rules('issued_by', translate('issued_by'), 'required');
                 $this->form_validation->set_rules('issue_date', translate('issue_date'), 'required');

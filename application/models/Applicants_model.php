@@ -98,11 +98,13 @@ class Applicants_model extends MY_Model
     // GET SINGLE EMPLOYEE DETAILS
     public function getSingleApplicant($id = '')
     {
+      
         $this->db->select('applicants.*');
         $this->db->from('applicants');
-        $this->db->where('applicants.id', $id);
-       
+        $this->db->where('id', $id);
+     
         $query = $this->db->get();
+       
         if ($query->num_rows() == 0) {
             show_404();
         }
@@ -173,7 +175,7 @@ class Applicants_model extends MY_Model
         } else {
             $this->db->insert('job_applicants', $insert_data);
             $jobApplicantId = $this->db->insert_id();
-            return $insert_data['unique_id'];
+            return $jobApplicantId;
         } 
       
     }
@@ -216,7 +218,6 @@ class Applicants_model extends MY_Model
             'amount' => $data['amount'],
             'transaction_id' => $data['amount'],
             'bank_name' => $data['bank_name'],
-            'payment_mode' => $data['payment_mode'],
             'status_id' => 16,
             'image_path' =>$filePath
         );
@@ -238,42 +239,6 @@ class Applicants_model extends MY_Model
         } 
       
     }
-    public function updatePayment($data)
-    {
-       
-        $applicant_id = get_loggedin_user_id();
-        $applicant = $this->getSingleApplicant($applicant_id);
-        $insert_data = array(
-            'payment_date' => $data['payment_date'],
-            'amount' => $data['amount'],
-            'transaction_id' => $data['transaction_id'],
-            'bank_name' => $data['bank_name'],
-            'status_id' => $data['status_id'],
-            'image_path' =>$filePath,
-            'payment_mode' =>$data['payment_mode'],
-            'payment_response' =>$data['payment_response'],
-            'payment_response_code'=>$data['payment_response_code']
-        );
-
-        if (isset($data['job_application_id'])) {
-            $this->db->where('unique_id', $data['job_application_id']);
-            $this->db->update('job_applicants', $insert_data);
-            $this->load->model('email_model');
-              $arrayData = array(
-                'username' => $applicant['name'],
-                'job_position' => $data["job_position"], 
-                'company_name' => $data["company_name"],
-                'institute_name' => "Domestic Testing Services",
-                'email' => $applicant['email'],
-                'login_url' => base_url('authentication')
-            );
-              
-            $this->email_model->sendChallanUpdate($arrayData);
-            return  $data['job_application_id'];
-        } 
-      
-    }
-    
     public function updateJobApplication($data)
     {
        
@@ -304,8 +269,48 @@ class Applicants_model extends MY_Model
         } 
       
     }
-    public function save_ipn_transaction($data) {
-        $this->db->insert('ipn_transactions', $data);
+    public function updatePayment($data)
+    {
+       
+        $applicant_id = get_loggedin_user_id();
+    //    print_r($applicant_id);
+         // $this->data['data'] = $this->status_model->getSingle('status', $id, true);
+       $applicant = $this->getSingleApplicant($applicant_id);
+        $insert_data = array(
+            'payment_date' => $data['payment_date'],
+            'amount' => $data['amount'],
+            'transaction_id' => $data['transaction_id'],
+            'bank_name' => $data['bank_name'],
+            'status_id' => $data['status_id'],
+            'image_path' =>$filePath,
+            'payment_mode' =>$data['payment_mode'],
+            'payment_response' =>$data['payment_response'],
+            'payment_response_code'=>$data['payment_response_code']
+        );
+
+        if (isset($data['job_application_id'])) {
+             
+
+            $this->db->where('unique_id', $data['job_application_id']);
+            $this->db->update('job_applicants', $insert_data);
+            if($data['status_id']==16)
+            {
+                 $this->load->model('email_model');
+                $arrayData = array(
+                'username' => $applicant['name'],
+                'job_position' => $data["job_position"], 
+                'company_name' => $data["company_name"],
+                'institute_name' => "Domestic Testing Services",
+                'email' => $applicant['email'],
+                'login_url' => base_url('authentication')
+            );
+              
+            $this->email_model->sendChallanUpdate($arrayData);
+            }
+           
+            return  $data['job_application_id'];
+        } 
+      
     }
     public function csvImport($row, $branchID, $userRole, $designationID, $departmentID)
     {

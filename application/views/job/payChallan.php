@@ -1,38 +1,7 @@
-<?php
-function generateSecureHash($parameters, $integritySalt) {
-    ksort($parameters); // Sort by key in ascending order
-    $sortedString = $integritySalt; // Start with the integrity salt
-    foreach ($parameters as $key => $value) {
-        if ($value !== "") {
-            $sortedString .= '&' . $value; // Concatenate each value
-        }
-    }
-    return strtoupper(hash_hmac('sha256', $sortedString, $integritySalt));
-}
-
-// Populate Parameters
-$parameters = [
-    "pp_Amount" => $jobApplication['challan_amount'] * 100, // Amount in paisas
-    "pp_BillReference" => $jobApplication['unique_id'],
-    "pp_CNIC" => $jobApplication['cnic'],
-    "pp_Description" => "Challan Payment for " . $jobApplication['designation'],
-    "pp_Language" => "EN",
-    "pp_MerchantID" => "MC143130",
-    "pp_MobileNumber" => $jobApplication['mobile_number'],
-    "pp_Password" => "wy249ytev5",
-    "pp_TxnCurrency" => "PKR",
-    "pp_TxnDateTime" => date("YmdHis"),
-    "pp_TxnExpiryDateTime" => date("YmdHis", strtotime("+1 day")),
-    "pp_TxnRefNo" => uniqid("T"),
-    "ppmpf_1" => $jobApplication['bank_name'],
-    "ppmpf_2" => $jobApplication['transaction_id']
-];
-
-$integritySalt = "zywe42e2su"; // Replace with actual integrity salt
-$parameters["pp_SecureHash"] = generateSecureHash($parameters, $integritySalt);
-?>
 <section class="panel">
-    <div class="tabs-custom">
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="tabs-custom">
         <ul class="nav nav-tabs">
             <li class="active">
                 <a href="#edit" data-toggle="tab"><i class="far fa-edit"></i> Update Challan</a>
@@ -58,8 +27,8 @@ $parameters["pp_SecureHash"] = generateSecureHash($parameters, $integritySalt);
 
                 <!-- Mobile Number -->
                 <div class="form-group">
-                    <label class="col-md-3 control-label">Mobile Number<span class="required">*</span></label>
-                    <div class="col-md-6">
+                    <label class="col-md-4 control-label">Mobile Number<span class="required">*</span></label>
+                    <div class="col-md-8">
                         <input type="text" class="form-control" name="pp_MobileNumber" required 
                                pattern="\d{11}" maxlength="11" minlength="11" title="Enter 11 digits mobile number (e.g., 03123456789)" 
                                placeholder="Enter Mobile Number" />
@@ -69,8 +38,8 @@ $parameters["pp_SecureHash"] = generateSecureHash($parameters, $integritySalt);
 
                 <!-- Last 5 Digits of CNIC -->
                 <div class="form-group">
-                    <label class="col-md-3 control-label">Last 5 Digits of CNIC<span class="required">*</span></label>
-                    <div class="col-md-6">
+                    <label class="col-md-4 control-label">Last 6 Digits of CNIC<span class="required">*</span></label>
+                    <div class="col-md-8">
                         <input type="text" class="form-control" name="pp_CNIC" required 
                                pattern="\d{5}" maxlength="6" minlength="6" title="Enter the last 6 digits of CNIC" 
                                placeholder="Enter Last 6 Digits of CNIC" />
@@ -80,8 +49,8 @@ $parameters["pp_SecureHash"] = generateSecureHash($parameters, $integritySalt);
 
                 <!-- Amount (Read-only) -->
                 <div class="form-group">
-                    <label class="col-md-3 control-label">Amount<span class="required">*</span></label>
-                    <div class="col-md-6">
+                    <label class="col-md-4 control-label">Amount<span class="required">*</span></label>
+                    <div class="col-md-8">
                         <input type="text" class="form-control" name="amount" readonly required 
                                value="<?= set_value('amount', $jobApplication['challan_amount']) ?>" />
                         <span class="error"><?= form_error('amount') ?></span>
@@ -91,7 +60,7 @@ $parameters["pp_SecureHash"] = generateSecureHash($parameters, $integritySalt);
                 <!-- Submit Button -->
                 <footer class="panel-footer mt-lg">
                     <div class="row">
-                        <div class="col-md-2 col-md-offset-3">
+                        <div class="col-md-6 col-md-offset-4">
                             <button type="submit" class="btn btn-default btn-block" name="submit" value="update">
                                 <i class="fas fa-save"></i> Save Changes
                             </button>
@@ -102,4 +71,11 @@ $parameters["pp_SecureHash"] = generateSecureHash($parameters, $integritySalt);
             </div>
         </div>
     </div>
+        </div>
+        <div class="col-sm-6">
+                    <img src="<?= base_url('assets/images/jc_mpin.png'); ?>" class="logo" style="max-width: 520px; height:400px">
+        
+        </div>
+    </div>
+    
 </section>

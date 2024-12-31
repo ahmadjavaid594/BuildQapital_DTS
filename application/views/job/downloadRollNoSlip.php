@@ -43,7 +43,6 @@ $qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=$qrD
         }
         .logo {
             max-width: 80px;
-            max-height 80px;
         }
         .img-thumbnail {
             border: 2px solid #333;
@@ -90,7 +89,7 @@ $qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=$qrD
     <tr>
         <td class="text-center" style="width: 25%;">
             <br>
-            <img src="<?= base_url('assets/images/logo.png'); ?>" alt="ETEA Logo" class="logo" style="max-width: 100px; height:70px">
+            <img src="<?= base_url('uploads/app_image/logo-small.png'); ?>" alt="DTS Logo" class="logo" style="width: 80px; height:80px">
         </td>
         <td class="text-center" style="width: 50%;">
             <br>
@@ -98,7 +97,7 @@ $qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=$qrD
             <p class="sub-header" style="font-size: 1rem; font-weight: bold; color: #666;">ROLL NUMBER SLIP</p>
         </td>
         <td class="text-center" style="width: 25%;">
-            <img src="<?= base_url($applicant['photo']); ?>" alt="Applicant Photo" class="img-thumbnail" style="width: 100px; height:100px">
+            <img src="<?= base_url($applicant['photo']); ?>" alt="Applicant Photo" class="img-thumbnail" style="width: 120px;  height:120px">
         </td>
     </tr>
 </table>
@@ -108,7 +107,7 @@ $qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=$qrD
 
         <!-- Reference Section -->
         <div class="text-center">
-            <p><strong>Rectt: <?=  $applicant['designation'].' ('.$applicant['organization'].')' ?></strong></p>
+            <p><strong>Position Applied: <?=  $applicant['designation'].' ('.$applicant['organization'].')' ?></strong></p>
         </div>
         <p class="mb-4">Reference to your application for the above-referred test, the test is scheduled as per the details mentioned below:</p>
 

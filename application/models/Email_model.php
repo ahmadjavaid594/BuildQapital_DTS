@@ -10,6 +10,30 @@ class Email_model extends CI_Model
         parent::__construct();
     }
 
+ public function sendJobStatusUpdate($data)
+    {
+        
+        $emailTemplate = $this->db->where('template_id',3)->get('email_templates_details')->row_array();
+    
+        if ($emailTemplate['notified'] == 1) {
+        
+            $message = $emailTemplate['template_body'];
+            $message = str_replace("{username}", $data['username'] , $message);
+            $message = str_replace("{job_position}", $data['job_position'], $message);
+            $message = str_replace("{company_name}", $data['company_name'], $message);
+            $message = str_replace("{institute_name}", $data['institute_name'], $message);
+            $message = str_replace("{application_status}", $data['application_status'], $message);
+            $message = str_replace("{custom_message}", $data['custom_message'], $message);
+            $message = str_replace("{email}", $data['email'], $message);
+            $message = str_replace("{login_url}", $data['login_url'], $message);
+            $msgData['recipient'] = $data['email'];
+            $msgData['subject'] = "DTS Job Application Status Update";
+            $msgData['message'] = $message;
+           
+            $this->sendEmail($msgData);
+          
+        }
+    }
     public function sentStaffRegisteredAccount($data)
     {
         $emailTemplate = $this->getEmailTemplates(1);
@@ -125,7 +149,7 @@ class Email_model extends CI_Model
         }
     }
 
-    public function sentForgotPassword($data)
+   public function sentForgotPassword($data)
     {
         
         $emailTemplate = $this->db->where('template_id',2)->get('email_templates_details')->row_array();
@@ -133,7 +157,7 @@ class Email_model extends CI_Model
         if ($emailTemplate['notified'] == 1) {
         
             $message = $emailTemplate['template_body'];
-            $message = str_replace("{institute_name}", "Domestic Testing Service", $message);
+            $message = str_replace("{institute_name}", "Domestic Testing Services", $message);
             $message = str_replace("{username}", $data['name'] , $message);
             $message = str_replace("{name}", $data['name'], $message);
             $message = str_replace("{email}", $data['email'], $message);
@@ -145,7 +169,7 @@ class Email_model extends CI_Model
           
         }
     }
-    public function sentSuccessRegister($data)
+        public function sentSuccessRegister($data)
     {
         
         $emailTemplate = $this->db->where('template_id',1)->get('email_templates_details')->row_array();
@@ -165,33 +189,7 @@ class Email_model extends CI_Model
           
         }
     }
-   
-
-    public function sendJobStatusUpdate($data)
-    {
-        
-        $emailTemplate = $this->db->where('template_id',3)->get('email_templates_details')->row_array();
-    
-        if ($emailTemplate['notified'] == 1) {
-        
-            $message = $emailTemplate['template_body'];
-            $message = str_replace("{username}", $data['username'] , $message);
-            $message = str_replace("{job_position}", $data['job_position'], $message);
-            $message = str_replace("{company_name}", $data['company_name'], $message);
-            $message = str_replace("{institute_name}", $data['institute_name'], $message);
-            $message = str_replace("{application_status}", $data['application_status'], $message);
-            $message = str_replace("{custom_message}", $data['custom_message'], $message);
-            $message = str_replace("{email}", $data['email'], $message);
-            $message = str_replace("{login_url}", $data['login_url'], $message);
-            $msgData['recipient'] = $data['email'];
-            $msgData['subject'] = "DTS Job Application Status Update";
-            $msgData['message'] = $message;
-           
-            $this->sendEmail($msgData);
-          
-        }
-    }
-    public function sendChallanUpdate($data)
+     public function sendChallanUpdate($data)
     {
         
         $emailTemplate = $this->db->where('template_id',4)->get('email_templates_details')->row_array();

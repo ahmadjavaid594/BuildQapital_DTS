@@ -13,7 +13,6 @@
 				<input type="hidden" name="job_id" id="job_id" value="<?php echo $jobApplication['id']; ?>">
 				<input type="hidden" name="company_name" id="organization" value="<?php echo $jobApplication['organization']; ?>">
 				<input type="hidden" name="job_position" id="designation" value="<?php echo $jobApplication['designation']; ?>">
-				<input type="hidden" name="payment_mode" id="designation" value="Manual"/>
 				
 				<div class="form-group">
 					<label class="col-md-3 control-label">Job Application Id<span class="required">*</span></label>

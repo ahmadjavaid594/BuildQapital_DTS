@@ -34,8 +34,6 @@ class Admin_Controller extends MY_Controller
     public function __construct()
     {
         parent::__construct();
-        //print_r($_POST);
-        //die;
         if (!is_loggedin()) {
             $this->session->set_userdata('redirect_url', current_url());
             redirect(base_url('authentication'), 'refresh');

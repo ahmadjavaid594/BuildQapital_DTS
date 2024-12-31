@@ -163,7 +163,7 @@ v class="row appear-animation" data-appear-animation="<?=$global_config['animati
 											<?php
 												$cities = $this->app_lib->getSelectListName('cities');
 												echo form_dropdown("city", $cities, set_value('cities', $applicant['city']), "class='form-control populate' data-plugin-selectTwo
-												data-width='100%' data-minimum-results-for-search='Infinity' ");
+												data-width='100%' ");
 											?>
 										</div>
 									</div>
@@ -175,7 +175,7 @@ v class="row appear-animation" data-appear-animation="<?=$global_config['animati
 											<?php
 												$districts = $this->app_lib->getSelectListName('districts');
 												echo form_dropdown("district", $districts, set_value('districts', $applicant['district']), "class='form-control populate' data-plugin-selectTwo
-												data-width='100%' data-minimum-results-for-search='Infinity' ");
+												data-width='100%'  ");
 											?>
 										</div>
 									</div>
@@ -185,7 +185,7 @@ v class="row appear-animation" data-appear-animation="<?=$global_config['animati
 											<?php
 												$provinces = $this->app_lib->getSelectListName('provinces');
 												echo form_dropdown("province", $provinces, set_value('provinces', $applicant['province']), "class='form-control populate' data-plugin-selectTwo
-												data-width='100%' data-minimum-results-for-search='Infinity' ");
+												data-width='100%' ");
 											?>
 										</div>
 									</div>
@@ -211,7 +211,7 @@ v class="row appear-animation" data-appear-animation="<?=$global_config['animati
 									<div class="col-md-12">
 										<div class="form-group">
 											<label for="input-file-now"><?=translate('profile_picture')?></label>
-											<input type="file" name="user_photo" Required class="dropify" data-default-file="<?= base_url($applicant['photo']); ?>"/>
+											<input type="file" name="user_photo" class="dropify" data-default-file="<?= base_url($applicant['photo']); ?>"/>
 											<span class="error"><?php echo form_error('user_photo'); ?></span>
 										</div>
 									</div>

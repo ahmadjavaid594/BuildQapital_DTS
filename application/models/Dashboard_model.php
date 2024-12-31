@@ -217,6 +217,17 @@ $results =  $this->db->query($sql)->result_array();
         return array(['name' => translate("expense"), 'value' => $r['dr']], ['name' => translate("income"), 'value' => $r['cr']]);
     }
 
+    public function getApplicantsSummary()
+    {
+        $query = 'select sum(y.count) counts, y.name, sum(y.paid) challans, sum(y.jobs) as total_jobs from (
+SELECT count(a.id) count, c.name, 0 as paid, 0 as jobs  FROM job_applicants a inner join job b on a.job_id = b.id inner join organization c on b.organization_id = c.id group by c.name
+UNION all
+SELECT 0 count, c.name, count(a.id) as paid, 0 as jobs  FROM job_applicants a inner join job b on a.job_id = b.id inner join organization c on b.organization_id = c.id where a.status_id = 16 group by c.name
+UNION all
+SELECT 0 count, c.name, 0 as paid, count(b.id) as jobs  FROM job b inner join organization c on b.organization_id = c.id group by c.name) y group by y.name';
+        $res = $this->db->query($query)->result();
+        return $res;
+    }
     /* total academic students strength classes divided into charts */
     public function getStudentByClass($branchID = '')
     {
@@ -281,15 +292,15 @@ $results =  $this->db->query($sql)->result_array();
         $this->db->where('ifnull(is_active,0)', 0);
         return $this->db->get('job')->num_rows();
     }
-    public function get_total_challans_paid()
-    {
-        $this->db->select('id');
-        $this->db->where('status_id', 16);
-        return $this->db->get('job_applicants')->num_rows();
-    }
     public function get_all_applications()
     {
        
+        return $this->db->get('job_applicants')->num_rows();
+    }
+      public function get_total_challans_paid()
+    {
+        $this->db->select('id');
+        $this->db->where('status_id', 16);
         return $this->db->get('job_applicants')->num_rows();
     }
     public function get_total_student($branchID = '')

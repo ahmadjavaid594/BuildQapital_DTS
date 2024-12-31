@@ -21,7 +21,7 @@ class Dashboard extends Admin_Controller
 
     public function index()
     {
-        if (is_superadmin_loggedin()) {
+        if (!is_applicant_loggedin()) {
             $this->data['school_id'] = $schoolID;
             $this->data['total_jobs'] = $this->dashboard_model->get_all_jobs();
             $this->data['total_users'] = $this->dashboard_model->get_all_users();
@@ -34,6 +34,7 @@ class Dashboard extends Admin_Controller
             $this->data['total_inactive_jobs'] = $this->dashboard_model->get_all_inactive_jobs();
             $this->data['total_applictions'] =  $this->dashboard_model->get_all_applications();
             $this->data['total_challans_paid'] =  $this->dashboard_model->get_total_challans_paid();
+            $this->data['summary'] =  $this->dashboard_model->getApplicantsSummary();
             $this->data['sub_page'] = 'dashboard/index';
         } else {
            

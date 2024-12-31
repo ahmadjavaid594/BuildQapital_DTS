@@ -59,7 +59,10 @@
 				timer: 8000
 			})
 		</script>
-	<?php endif; ?>
+		
+	<?php
+     $this->session->unset_userdata('alert-message-' . $alertclass);
+	endif; ?>
 
 	<!-- sweetalert box -->
 	<script type="text/javascript">

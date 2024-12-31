@@ -64,7 +64,7 @@
 									<label class="control-label"><?=translate('name')?> <span class="required">*</span></label>
 									<div class="input-group">
 										<span class="input-group-addon"><i class="far fa-user"></i></span>
-										<input type="text" class="form-control" name="name" value="<?=set_value('name')?>" />
+										<input type="text" class="form-control" name="name" value="<?=set_value('name')?>" oninput="validateName(this,100)" />
 									</div>
 									<span class="error"><?php echo form_error('name'); ?></span>
 								</div>
@@ -152,7 +152,7 @@
 							<div class="col-md-6 mb-sm">
 								<div class="form-group">
 									<label class="control-label">Father Name<span class="required">*</span></label>
-									<input type="text" class="form-control" name="father_name" value="<?=set_value('religion')?>">
+									<input type="name" class="form-control" name="father_name" value="<?=set_value('religion')?>" oninput="validateName(this,100)">
 								</div>
 							</div>
 							<div class="col-md-6 mb-sm">
@@ -162,7 +162,7 @@
 										<?php
 											$cities = $this->app_lib->getSelectListName('cities');
 											echo form_dropdown("city", $cities, set_value('id'), "class='form-control' required='' 
-											data-width='100%' data-plugin-selectTwo data-minimum-results-for-search='Infinity'");
+											data-width='100%' data-plugin-selectTwo");
 										?>
 									
 									
@@ -177,7 +177,7 @@
 										<?php
 											$provinces = $this->app_lib->getSelectListName('provinces');
 											echo form_dropdown("province", $provinces, set_value('nid'), "class='form-control' required=''
-											data-width='100%' data-plugin-selectTwo data-minimum-results-for-search='Infinity'");
+											data-width='100%' data-plugin-selectTwo");
 										?>
 									
 								</div>
@@ -189,7 +189,7 @@
 										<?php
 											$districts = $this->app_lib->getSelectListName('districts');
 											echo form_dropdown("district", $districts, set_value('id'), "class='form-control' required='' id='designation_id'
-											data-width='100%' data-plugin-selectTwo data-minimum-results-for-search='Infinity'");
+											data-width='100%' data-plugin-selectTwo");
 										?>
 									
 								</div>
@@ -284,11 +284,21 @@
 </div>
 <script>
   function validateLength(input, len) {
+    input.value = input.value.replace(/[^0-9]/g, '');
     if (input.value.length > len) {
       input.value = input.value.slice(0, len);
     }
   }
 
+function validateName(input, maxLength) {
+    // Allow only alphabets, spaces, and hyphens
+    input.value = input.value.replace(/[^a-zA-Z\s]/g, '');
+
+    // Limit the input length to the specified maxLength
+    if (input.value.length > maxLength) {
+        input.value = input.value.slice(0, maxLength);
+    }
+}
   // Add event listener to the submit button
   document.getElementById("submitButton").addEventListener("click", function (event) {
     // Prevent default form submission

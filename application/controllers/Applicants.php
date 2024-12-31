@@ -23,7 +23,7 @@ class Applicants extends Admin_Controller
     /* branch all data are prepared and stored in the database here */
     public function index()
     {
-        if (is_superadmin_loggedin()) {
+        if (!is_applicant_loggedin()) {
             
             $this->data['title'] = 'Users';
             $this->data['sub_page'] = 'applicants/add';
