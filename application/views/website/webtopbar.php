@@ -121,6 +121,10 @@
                class="<?php echo (current_url() == base_url('jobs')) ? 'active' : ''; ?>">Jobs</a>
         </li>
         <li>
+            <a href="<?php echo base_url('resultsList'); ?>" 
+               class="<?php echo (current_url() == base_url('resultsList')) ? 'active' : ''; ?>">Results</a>
+        </li>
+        <li>
             <a href="<?php echo base_url('login'); ?>" 
                class="<?php echo (current_url() == base_url('login')) ? 'active' : ''; ?>">Login</a>
         </li>

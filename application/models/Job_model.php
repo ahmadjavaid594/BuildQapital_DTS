@@ -183,6 +183,30 @@ public function getChallans() {
 
     return $this->db->query($sql)->result_array();
 }
+
+public function getResults() {
+    $applicant_id = get_loggedin_user_id();
+    $sql = "SELECT
+                j.*, q.name as qouta, o.name as organization, o.industry, l.name as location,
+                d.name as designation, jt.name as job_type,  CASE j.is_active WHEN 1 THEN 'Active' ELSE 'Inactive' END as status,
+                 ja.application_date,
+                 ss.name as job_status,ja.unique_id,ja.status_id, ja.payment_date, ja.amount, ja.transaction_id,ja.bank_name, ja.application_date, ja.remarks,ja.payment_mode, trs.marks_obtained,trs.total_marks, trs.status as test_status, trs.remarks as test_remarks
+            FROM
+                job j
+            INNER JOIN qouta q ON j.qouta_id = q.id
+            INNER JOIN organization o ON j.organization_id = o.id
+            INNER JOIN designation d ON j.designation_id = d.id
+            INNER JOIN job_type jt ON j.job_type_id = jt.id
+            INNER JOIN location l ON l.id = j.location_id
+            INNER JOIN job_applicants ja ON ja.job_id = j.id AND ja.applicant_id = $applicant_id
+            INNER JOIN status ss ON ja.status_id = ss.id 
+            LEFT Join test_result_records trs ON ja.unique_id = trs.roll_no
+            WHERE ja.status_id in (14)";
+
+    return $this->db->query($sql)->result_array();
+}
+
+
 public function getJobsSyllabus() {
     $applicant_id = get_loggedin_user_id();
     $sql = "SELECT
@@ -365,6 +389,18 @@ public function getChallanDetail($applicationId) {
         $sql .= " LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
     
         // Execute the query and return the results
+        $query = $this->db->query($sql);
+        return $query->result_array();
+    }
+    public function getResultsList() {
+        // Base SQL query
+        $sql = "SELECT
+            distinct j.id,o.name as organization, d.name as designation
+        FROM
+            job j
+        INNER JOIN organization o ON j.organization_id = o.id
+        INNER JOIN designation d ON j.designation_id = d.id
+        INNER JOIN test_result_records x ON x.job_id = j.id";
         $query = $this->db->query($sql);
         return $query->result_array();
     }
