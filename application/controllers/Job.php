@@ -903,6 +903,20 @@ class Job extends Admin_Controller
         $this->load->view('layout/index', $this->data);
 
     }
+    public function results()
+    {
+        
+        $jobs = $this->job_model->getResults();
+        
+        $this->data['jobs'] = $jobs;
+        
+        $this->data['title'] = 'Results';
+        $this->data['sub_page'] = 'job/viewResults';
+        $this->data['main_menu'] = 'results';
+       
+        $this->load->view('layout/index', $this->data);
+
+    }
     public function rollNoSlips()
     {
         

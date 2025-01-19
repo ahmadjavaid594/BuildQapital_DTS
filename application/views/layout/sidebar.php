@@ -121,6 +121,11 @@
                             <i class="fas fa-briefcase"></i><span>Applicant Queries</span>
                         </a>
                     </li>
+                    <li class="<?php if ($main_menu == 'results') echo 'nav-active';?>">
+                        <a href="<?=base_url('results')?>">
+                            <i class="fas fa-briefcase"></i><span>Results</span>
+                        </a>
+                    </li>
                     <!--<li class="<?php if ($main_menu == 'status') echo 'nav-active';?>">
                         <a href="<?=base_url('status')?>">
                             <i class="fas fa-briefcase"></i><span>Status</span>
@@ -186,6 +191,11 @@
                      <li class="<?php if ($main_menu == 'contactUs') echo 'nav-active';?>">
                         <a href="<?=base_url('contactUs')?>">
                             <i class="fas fa-briefcase"></i><span>Ask Queries?</span>
+                        </a>
+                    </li>
+                    <li class="<?php if ($main_menu == 'job/results') echo 'nav-active';?>">
+                        <a href="<?=base_url('job/results')?>">
+                            <i class="fas fa-briefcase"></i><span>Results</span>
                         </a>
                     </li>
                     <?php endif; ?>

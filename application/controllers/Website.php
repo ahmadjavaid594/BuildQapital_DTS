@@ -8,8 +8,10 @@ class Website extends CI_Controller
 
     public function __construct()
     {
+        
         parent::__construct();
         $this->load->model('employee_model');
+        $this->load->model('Test_Result_Model');
         $this->load->model('location_model');
         $this->load->model('designation_model');
         $this->load->model('job_model');
@@ -109,7 +111,7 @@ class Website extends CI_Controller
         if (!$job) {
             show_404(); // Show 404 if job is not found
         }
-    
+
         $this->data['job'] = $job;
         //$this->load->view('job_view', $data);
         $this->data['sub_page'] = 'website/viewjob';
@@ -198,6 +200,46 @@ class Website extends CI_Controller
         
         
     
+    }
+    public function results()
+    {
+            $this->data['results'] = $this->job_model->getResultsList();           
+            $this->data['sub_page'] = 'website/results';
+            $this->load->view('website/index', $this->data);
+    }
+    public function viewResults($job_id) {
+
+      
+        $job = $this->job_model->getJobDetails($job_id);
+    
+        if ($_POST) {
+            
+           
+            $this->form_validation->set_rules('roll_no', 'Roll Number', 'required');
+
+            if ($this->form_validation->run() === true) {
+             
+                $roll_no = $this->input->post('roll_no');
+                $job_id = $this->input->post('job_id');
+                $result = $this->Test_Result_Model->get_result_by_roll_no($roll_no,$job_id);
+                $this->data['result'] = $result;
+            }
+       
+            $this->data['job'] = $job;
+            //$this->load->view('job_view', $data);
+            $this->data['sub_page'] = 'website/viewResult';
+            $this->load->view('website/index', $this->data);
+        }
+        else{
+            $this->data['job'] = $job;
+            //$this->load->view('job_view', $data);
+            $this->data['sub_page'] = 'website/viewResult';
+            $this->load->view('website/index', $this->data);
+        }
+
+     
+      
+
     }
     public function register()
     {
